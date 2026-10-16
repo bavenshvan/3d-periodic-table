@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>3D Periodic Table Visualizer</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: radial-gradient(circle at 50% 40%, #0b1330, #02030a 70%); font-family: "Segoe UI", system-ui, sans-serif; color: #fff; }
+#container { position: fixed; inset: 0; }
+
+#menu { position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); left: 0; right: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 0 12px; }
+#menu button { cursor: pointer; color: #9ff; background: rgba(20, 40, 70, .45); border: 1px solid rgba(100, 255, 220, .4); border-radius: 999px; padding: 8px 16px; font-size: 13px; letter-spacing: .05em; backdrop-filter: blur(8px); transition: .2s; }
+#menu button:hover { background: rgba(80, 255, 220, .25); box-shadow: 0 0 14px rgba(80, 255, 220, .6); }
+#menu button.active { background: rgba(80, 255, 220, .35); color: #fff; box-shadow: 0 0 16px rgba(80, 255, 220, .8); }
+#hint { position: fixed; bottom: 12px; width: 100%; text-align: center; font-size: 12px; opacity: .5; pointer-events: none; }
+
+.element {
+  --c: 80, 220, 255;
+  width: 120px; height: 160px; padding: 8px 10px;
+  border-radius: 10px; cursor: pointer; user-select: none;
+  background: linear-gradient(135deg, rgba(var(--c), .22), rgba(var(--c), .05));
+  border: 1px solid rgba(var(--c), .55);
+  box-shadow: 0 0 14px rgba(var(--c), .35), inset 0 0 20px rgba(var(--c), .12);
+  backdrop-filter: blur(6px);
+  text-align: center; transition: box-shadow .25s, background .25s, border-color .25s;
+}
+.element:hover { background: linear-gradient(135deg, rgba(var(--c), .55), rgba(var(--c), .2)); border-color: rgba(var(--c), 1); box-shadow: 0 0 34px rgba(var(--c), .95), inset 0 0 24px rgba(var(--c), .35); }
+.element .number { position: absolute; top: 8px; right: 10px; font-size: 12px; opacity: .8; }
+.element .symbol { position: absolute; top: 38px; left: 0; right: 0; font-size: 56px; font-weight: 700; color: #fff; text-shadow: 0 0 12px rgba(var(--c), 1); }
+.element .details { position: absolute; bottom: 12px; left: 0; right: 0; font-size: 12px; line-height: 1.5; color: rgba(255, 255, 255, .8); }
+.element .details b { display: block; font-size: 13px; color: #fff; font-weight: 600; }
+
+.cat-alkali    { --c: 255, 90, 90; }
+.cat-alkaline  { --c: 255, 160, 70; }
+.cat-transition{ --c: 255, 220, 80; }
+.cat-post      { --c: 120, 255, 140; }
+.cat-metalloid { --c: 70, 230, 190; }
+.cat-nonmetal  { --c: 80, 170, 255; }
+.cat-halogen   { --c: 170, 120, 255; }
+.cat-noble     { --c: 255, 110, 220; }
+.cat-lanth     { --c: 190, 220, 255; }
+.cat-actin     { --c: 255, 150, 170; }
+
+/* search / filter / info */
+#tools { position: fixed; left: 0; right: 0; bottom: calc(30px + env(safe-area-inset-bottom, 0px)); z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 12px; pointer-events: none; }
+#tools > * { pointer-events: auto; }
+#legend { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 760px; }
+.chip { --c: 80, 220, 255; cursor: pointer; font-size: 11px; padding: 4px 10px; border-radius: 999px; color: rgb(var(--c)); background: rgba(var(--c), .12); border: 1px solid rgba(var(--c), .7); backdrop-filter: blur(6px); }
+.chip.on { background: rgba(var(--c), .5); color: #fff; box-shadow: 0 0 12px rgba(var(--c), .9); }
+#searchRow { display: flex; align-items: center; gap: 10px; }
+#search { width: min(280px, 70vw); padding: 9px 16px; font-size: 16px; color: #fff; background: rgba(20, 40, 70, .55); border: 1px solid rgba(100, 255, 220, .5); border-radius: 999px; outline: none; backdrop-filter: blur(8px); }
+#search:focus { box-shadow: 0 0 16px rgba(80, 255, 220, .7); }
+#count { font-size: 12px; color: #9ff; min-width: 70px; }
+#info { display: none; align-items: center; gap: 14px; padding: 10px 16px; border-radius: 14px; background: rgba(10, 25, 50, .75); border: 1px solid rgba(100, 255, 220, .5); box-shadow: 0 0 24px rgba(80, 255, 220, .35); backdrop-filter: blur(10px); }
+#info .big { font-size: 40px; font-weight: 700; text-shadow: 0 0 14px rgba(var(--c), 1); color: #fff; min-width: 56px; text-align: center; }
+#info .txt { font-size: 13px; line-height: 1.5; color: rgba(255, 255, 255, .85); }
+#info .txt b { font-size: 16px; color: #fff; }
+#info .x { cursor: pointer; background: none; border: 0; color: #9ff; font-size: 20px; }
+.element { transition: box-shadow .25s, background .25s, border-color .25s, opacity .4s, filter .4s; }
+#info { flex-wrap: wrap; justify-content: center; max-width: 94vw; }
+#atom { width: 120px; height: 120px; }
+#grad { display: none; justify-content: space-between; width: min(300px, 70vw); height: 16px; line-height: 16px; padding: 0 8px; border-radius: 8px; color: #001; font-size: 10px; font-weight: 700; }
+#colorBy { color: #9ff; background: rgba(20, 40, 70, .45); border: 1px solid rgba(100, 255, 220, .4); border-radius: 999px; padding: 7px 10px; font-size: 12px; }
+#exitPres { display: none; position: fixed; top: 12px; right: 12px; z-index: 20; }
+body.pres #menu, body.pres #tools, body.pres #hint { display: none; }
+body.pres #exitPres { display: block; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 3px; }
+.act { cursor: pointer; color: #fff; background: rgba(80, 255, 220, .3); border: 1px solid rgba(100, 255, 220, .6); border-radius: 999px; padding: 6px 12px; font-size: 12px; }
+.element.dim { opacity: .1; filter: grayscale(.9); }
+.element.hit { border-color: #fff; box-shadow: 0 0 44px rgba(var(--c), 1), inset 0 0 28px rgba(var(--c), .55); }
+@media (max-width: 600px) { #menu button { padding: 6px 12px; font-size: 12px; } }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/renderers/CSS3DRenderer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/TrackballControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+</head>
+<body>
+<div id="container"></div>
+<header id="menu">
+  <button data-layout="table" class="active">Table</button>
+  <button data-layout="sphere">Sphere</button>
+  <button data-layout="helix">Helix</button>
+  <button data-layout="grid">Grid</button>
+  <button data-layout="cylinder">Cylinder</button>
+  <button data-layout="torus">Torus</button>
+  <button data-layout="wave">Sine Wave</button>
+  <button data-layout="dna">DNA</button>
+  <button data-layout="galaxy">Galaxy</button>
+  <button data-layout="heart">Heart</button>
+  <button data-layout="saturn">Saturn</button>
+  <button data-layout="pyramid">Pyramid</button>
+  <select id="colorBy"></select>
+  <button id="lang">EN</button>
+  <button id="pres" title="Presentation">▶</button>
+  <button id="reset" title="Reset view">⟲</button>
+  <button id="mute" title="Toggle sound">🔊</button>
+</header>
+<button class="act" id="exitPres">✕</button>
+<div id="tools">
+  <div id="grad"></div>
+  <div id="info"><div class="big" id="iSym"></div><div class="txt" id="iTxt"></div><canvas id="atom" width="240" height="240"></canvas><button class="act" id="iFocus">Focus</button><button class="x" id="iClose">×</button></div>
+  <div id="legend"></div>
+  <div id="searchRow"><input id="search" type="search" placeholder="Search element, symbol or number…" autocomplete="off"><span id="count"></span></div>
+</div>
+<div id="hint">Tap a card for info · Tap Focus (or double-tap) to zoom in · ⟲ resets the view</div>
+<script>
+/* [symbol, name, mass, column, row] in atomic-number order */
+const DATA = [
+['H','Hydrogen',1.008,1,1],['He','Helium',4.0026,18,1],
+['Li','Lithium',6.94,1,2],['Be','Beryllium',9.0122,2,2],['B','Boron',10.81,13,2],['C','Carbon',12.011,14,2],['N','Nitrogen',14.007,15,2],['O','Oxygen',15.999,16,2],['F','Fluorine',18.998,17,2],['Ne','Neon',20.18,18,2],
+['Na','Sodium',22.99,1,3],['Mg','Magnesium',24.305,2,3],['Al','Aluminium',26.982,13,3],['Si','Silicon',28.085,14,3],['P','Phosphorus',30.974,15,3],['S','Sulfur',32.06,16,3],['Cl','Chlorine',35.45,17,3],['Ar','Argon',39.948,18,3],
+['K','Potassium',39.098,1,4],['Ca','Calcium',40.078,2,4],['Sc','Scandium',44.956,3,4],['Ti','Titanium',47.867,4,4],['V','Vanadium',50.942,5,4],['Cr','Chromium',51.996,6,4],['Mn','Manganese',54.938,7,4],['Fe','Iron',55.845,8,4],['Co','Cobalt',58.933,9,4],['Ni','Nickel',58.693,10,4],['Cu','Copper',63.546,11,4],['Zn','Zinc',65.38,12,4],['Ga','Gallium',69.723,13,4],['Ge','Germanium',72.63,14,4],['As','Arsenic',74.922,15,4],['Se','Selenium',78.971,16,4],['Br','Bromine',79.904,17,4],['Kr','Krypton',83.798,18,4],
+['Rb','Rubidium',85.468,1,5],['Sr','Strontium',87.62,2,5],['Y','Yttrium',88.906,3,5],['Zr','Zirconium',91.224,4,5],['Nb','Niobium',92.906,5,5],['Mo','Molybdenum',95.95,6,5],['Tc','Technetium',98,7,5],['Ru','Ruthenium',101.07,8,5],['Rh','Rhodium',102.91,9,5],['Pd','Palladium',106.42,10,5],['Ag','Silver',107.87,11,5],['Cd','Cadmium',112.41,12,5],['In','Indium',114.82,13,5],['Sn','Tin',118.71,14,5],['Sb','Antimony',121.76,15,5],['Te','Tellurium',127.6,16,5],['I','Iodine',126.9,17,5],['Xe','Xenon',131.29,18,5],
+['Cs','Caesium',132.91,1,6],['Ba','Barium',137.33,2,6],
+['La','Lanthanum',138.91,3,9],['Ce','Cerium',140.12,4,9],['Pr','Praseodymium',140.91,5,9],['Nd','Neodymium',144.24,6,9],['Pm','Promethium',145,7,9],['Sm','Samarium',150.36,8,9],['Eu','Europium',151.96,9,9],['Gd','Gadolinium',157.25,10,9],['Tb','Terbium',158.93,11,9],['Dy','Dysprosium',162.5,12,9],['Ho','Holmium',164.93,13,9],['Er','Erbium',167.26,14,9],['Tm','Thulium',168.93,15,9],['Yb','Ytterbium',173.05,16,9],['Lu','Lutetium',174.97,17,9],
+['Hf','Hafnium',178.49,4,6],['Ta','Tantalum',180.95,5,6],['W','Tungsten',183.84,6,6],['Re','Rhenium',186.21,7,6],['Os','Osmium',190.23,8,6],['Ir','Iridium',192.22,9,6],['Pt','Platinum',195.08,10,6],['Au','Gold',196.97,11,6],['Hg','Mercury',200.59,12,6],['Tl','Thallium',204.38,13,6],['Pb','Lead',207.2,14,6],['Bi','Bismuth',208.98,15,6],['Po','Polonium',209,16,6],['At','Astatine',210,17,6],['Rn','Radon',222,18,6],
+['Fr','Francium',223,1,7],['Ra','Radium',226,2,7],
+['Ac','Actinium',227,3,10],['Th','Thorium',232.04,4,10],['Pa','Protactinium',231.04,5,10],['U','Uranium',238.03,6,10],['Np','Neptunium',237,7,10],['Pu','Plutonium',244,8,10],['Am','Americium',243,9,10],['Cm','Curium',247,10,10],['Bk','Berkelium',247,11,10],['Cf','Californium',251,12,10],['Es','Einsteinium',252,13,10],['Fm','Fermium',257,14,10],['Md','Mendelevium',258,15,10],['No','Nobelium',259,16,10],['Lr','Lawrencium',266,17,10],
+['Rf','Rutherfordium',267,4,7],['Db','Dubnium',268,5,7],['Sg','Seaborgium',269,6,7],['Bh','Bohrium',270,7,7],['Hs','Hassium',277,8,7],['Mt','Meitnerium',278,9,7],['Ds','Darmstadtium',281,10,7],['Rg','Roentgenium',282,11,7],['Cn','Copernicium',285,12,7],['Nh','Nihonium',286,13,7],['Fl','Flerovium',289,14,7],['Mc','Moscovium',290,15,7],['Lv','Livermorium',293,16,7],['Ts','Tennessine',294,17,7],['Og','Oganesson',294,18,7]
+];
+
+function category(n, col, row) {
+  if (row === 9) return 'lanth';
+  if (row === 10) return 'actin';
+  if (n === 1) return 'nonmetal';
+  if (col === 18) return 'noble';
+  if (col === 17) return 'halogen';
+  if (col === 1) return 'alkali';
+  if (col === 2) return 'alkaline';
+  if (col >= 3 && col <= 12) return 'transition';
+  if ([5, 14, 32, 33, 51, 52].includes(n)) return 'metalloid';
+  if ([6, 7, 8, 15, 16, 34].includes(n)) return 'nonmetal';
+  return 'post';
+}
+
+/* ---------- Scene setup ---------- */
+const container = document.getElementById('container');
+const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 1, 10000);
+camera.position.z = 3000;
+const scene = new THREE.Scene();
+const renderer = new THREE.CSS3DRenderer();
+renderer.setSize(innerWidth, innerHeight);
+container.appendChild(renderer.domElement);
+
+const controls = new THREE.TrackballControls(camera, renderer.domElement);
+controls.minDistance = 500;
+controls.maxDistance = 6000;
+controls.rotateSpeed = 2;
+
+/* ---------- Build cards ---------- */
+const objects = [];
+DATA.forEach(([sym, name, mass, col, row], i) => {
+  const n = i + 1;
+  const el = document.createElement('div');
+  el.className = `element cat-${category(n, col, row)}`;
+  el.innerHTML = `
+    <div class="number">${n}</div>
+    <div class="symbol">${sym}</div>
+    <div class="details"><b>${name}</b>${mass}</div>`;
+  const obj = new THREE.CSS3DObject(el);
+  obj.position.set(Math.random() * 4000 - 2000, Math.random() * 4000 - 2000, Math.random() * 4000 - 2000);
+  scene.add(obj);
+  objects.push(obj);
+  obj.userData.tablePos = [col, row];
+});
+
+/* ---------- Layout targets ---------- */
+const N = objects.length;
+const vec = new THREE.Vector3();
+
+function makeTargets(fn) {
+  return objects.map((_, i) => {
+    const t = new THREE.Object3D();
+    fn(t, i);
+    return t;
+  });
+}
+
+const builders = {
+  table: () => makeTargets((t, i) => {
+    const [c, r] = objects[i].userData.tablePos;
+    t.position.set(c * 140 - 1330, -(r * 180) + 990, 0);
+  }),
+
+  sphere: () => makeTargets((t, i) => {
+    const phi = Math.acos(-1 + (2 * i) / N);
+    const theta = Math.sqrt(N * Math.PI) * phi;
+    t.position.setFromSphericalCoords(800, phi, theta);
+    vec.copy(t.position).multiplyScalar(2);
+    t.lookAt(vec);
+  }),
+
+  helix: () => makeTargets((t, i) => {
+    const theta = i * 0.175 + Math.PI;
+    const y = -(i * 8) + 450;
+    t.position.setFromCylindricalCoords(900, theta, y);
+    vec.set(t.position.x * 2, t.position.y, t.position.z * 2);
+    t.lookAt(vec);
+  }),
+
+  grid: () => makeTargets((t, i) => {
+    t.position.set(
+      (i % 5) * 400 - 800,
+      (-(Math.floor(i / 5) % 5) * 400) + 800,
+      Math.floor(i / 25) * 1000 - 2000
+    );
+  }),
+
+  cylinder: () => makeTargets((t, i) => {
+    const perRing = 20, ring = Math.floor(i / perRing), k = i % perRing;
+    const theta = (k / perRing) * Math.PI * 2 + ring * 0.2;
+    t.position.setFromCylindricalCoords(1000, theta, ring * 220 - 650);
+    vec.set(0, t.position.y, 0);      // face inward (tunnel)
+    t.lookAt(vec);
+  }),
+
+  torus: () => makeTargets((t, i) => {
+    const R = 1000, r = 380;
+    const u = (i / N) * Math.PI * 2;               // around the ring
+    const v = i * 0.55;                             // around the tube
+    t.position.set(
+      (R + r * Math.cos(v)) * Math.cos(u),
+      r * Math.sin(v),
+      (R + r * Math.cos(v)) * Math.sin(u)
+    );
+    vec.set(R * Math.cos(u), 0, R * Math.sin(u));
+    vec.multiplyScalar(2).sub(t.position);
+    t.lookAt(vec);
+  }),
+
+  wave: () => makeTargets((t, i) => {
+    const cols = 12, x = i % cols, z = Math.floor(i / cols);
+    const px = x * 260 - (cols - 1) * 130;
+    const pz = z * 260 - 1200;
+    const y = Math.sin(x * 0.7) * 260 + Math.cos(z * 0.7) * 260;
+    t.position.set(px, y, pz);
+    t.rotation.set(Math.sin(z * 0.7) * 0.5 - Math.PI / 8, 0, -Math.cos(x * 0.7) * 0.5);
+  }),
+};
+
+/* ---------- Extra shapes ---------- */
+Object.assign(builders, {
+  dna: () => makeTargets((t, i) => {            // two intertwined strands
+    const k = i >> 1, strand = i & 1;
+    t.position.setFromCylindricalCoords(450, k * 0.3 + strand * Math.PI, (k - 29.5) * 24);
+    vec.set(t.position.x * 2, t.position.y, t.position.z * 2);
+    t.lookAt(vec);
+  }),
+
+  galaxy: () => makeTargets((t, i) => {         // 3 spiral arms
+    const arm = i % 3, u = Math.floor(i / 3) / (N / 3);
+    const r = 300 + u * 1200, ang = arm * Math.PI * 2 / 3 + u * 7;
+    t.position.set(r * Math.cos(ang), r * Math.sin(ang), Math.sin(i * 12.9898) * 120);
+  }),
+
+  heart: () => makeTargets((t, i) => {
+    const a = (i * 2.399963) % (Math.PI * 2), s = Math.sqrt((i + 1) / N), k = 70;
+    const hx = 16 * Math.pow(Math.sin(a), 3);
+    const hy = 13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a);
+    t.position.set(hx * k * s, hy * k * s + 60, Math.sin(i * 3.7) * 60);
+  }),
+
+  saturn: () => {                               // planet + 2 tilted rings
+    const tilt = new THREE.Euler(0.45, 0, 0.3);
+    const normal = new THREE.Vector3(0, 1, 0).applyEuler(tilt);
+    return makeTargets((t, i) => {
+      if (i < 38) {
+        const phi = Math.acos(-1 + (2 * i) / 38), theta = Math.sqrt(38 * Math.PI) * phi;
+        t.position.setFromSphericalCoords(330, phi, theta);
+        vec.copy(t.position).multiplyScalar(2);
+        t.lookAt(vec);
+      } else {
+        const j = i - 38, inner = j < 36, n = inner ? 36 : 44, k = inner ? j : j - 36;
+        const R = inner ? 700 : 880, a = (k / n) * Math.PI * 2;
+        t.position.set(R * Math.cos(a), 0, R * Math.sin(a)).applyEuler(tilt);
+        vec.copy(t.position).add(normal);
+        t.lookAt(vec);
+      }
+    });
+  },
+
+  pyramid: () => makeTargets((t, i) => {         // stacked square layers 1,4,9,16...
+    let rem = i, l = 0;
+    while (rem >= (l + 1) * (l + 1)) { rem -= (l + 1) * (l + 1); l++; }
+    const n = l + 1, gx = rem % n, gz = Math.floor(rem / n);
+    t.position.set((gx - (n - 1) / 2) * 230, 700 - l * 230, (gz - (n - 1) / 2) * 230);
+  }),
+});
+
+/* ---------- targets: Object3D per card, per shape ---------- */
+const targets = {};
+for (const name in builders) targets[name] = builders[name]();
+
+/* ---------- Web Audio sound synth ---------- */
+let actx = null, master = null, muted = false;
+function audio() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  if (!actx) {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    master = actx.createGain();
+    master.gain.value = muted ? 0 : 0.9;
+    const comp = actx.createDynamicsCompressor();
+    master.connect(comp); comp.connect(actx.destination);
+  }
+  if (actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function tone({ type = 'sine', f0 = 440, f1 = f0, t0 = 0, dur = 0.5, vol = 0.3, lp = 0 }) {
+  const c = audio(), t = c.currentTime + t0;
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(Math.max(f1, 1), t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.05, dur / 4));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  if (lp) {
+    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp;
+    o.connect(f); f.connect(g);
+  } else o.connect(g);
+  g.connect(master);
+  o.start(t); o.stop(t + dur + 0.05);
+}
+function noise({ t0 = 0, dur = 1, vol = 0.15, f0 = 500, f1 = 3000 }) {
+  const c = audio(), t = c.currentTime + t0;
+  const buf = c.createBuffer(1, Math.ceil(c.sampleRate * dur), c.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const src = c.createBufferSource(); src.buffer = buf;
+  const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 2;
+  bp.frequency.setValueAtTime(f0, t);
+  bp.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + dur * 0.3);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(bp); bp.connect(g); g.connect(master);
+  src.start(t);
+}
+
+/* One-shot "stinger" played when you switch to a shape */
+const sounds = {
+  table:    () => [523, 659, 784].forEach((f, i) => tone({ type: 'triangle', f0: f, t0: i * 0.09, dur: 0.6, vol: 0.25 })),
+  sphere:   () => { tone({ f0: 180, f1: 900, dur: 1, vol: 0.3 }); tone({ f0: 360, f1: 1800, dur: 1, vol: 0.1 }); },
+  helix:    () => [262, 330, 392, 494, 523, 659, 784, 988].forEach((f, i) => tone({ type: 'triangle', f0: f, t0: i * 0.07, dur: 0.3, vol: 0.22 })),
+  dna:      () => { tone({ f0: 300, f1: 600, dur: 1.2, vol: 0.25 }); tone({ f0: 303, f1: 450, dur: 1.2, vol: 0.25 }); tone({ f0: 900, f1: 1200, t0: 0.6, dur: 0.6, vol: 0.08 }); },
+  grid:     () => [600, 800, 700, 900, 750, 1000].forEach((f, i) => tone({ type: 'square', f0: f, t0: i * 0.08, dur: 0.07, vol: 0.12, lp: 2000 })),
+  cylinder: () => { tone({ type: 'sawtooth', f0: 80, f1: 160, dur: 1.4, vol: 0.3, lp: 500 }); noise({ dur: 1.4, f0: 200, f1: 1200, vol: 0.1 }); },
+  torus:    () => { tone({ f0: 220, f1: 660, dur: 0.7, vol: 0.28 }); tone({ f0: 660, f1: 220, t0: 0.7, dur: 0.7, vol: 0.28 }); },
+  galaxy:   () => { noise({ dur: 1.6, f0: 300, f1: 6000, vol: 0.15 }); for (let i = 0; i < 6; i++) tone({ f0: 1200 + Math.random() * 2000, t0: 0.2 + i * 0.2, dur: 0.4, vol: 0.06 }); },
+  heart:    () => [0, 0.22, 0.8, 1.02].forEach((t0, i) => tone({ f0: i % 2 ? 70 : 100, f1: 40, t0, dur: 0.2, vol: 0.6 })),
+  wave:     () => [0, 0.5, 1].forEach(t0 => { tone({ f0: 300, f1: 600, t0, dur: 0.25, vol: 0.22 }); tone({ f0: 600, f1: 300, t0: t0 + 0.25, dur: 0.25, vol: 0.22 }); }),
+  saturn:   () => { tone({ type: 'square', f0: 110, f1: 220, dur: 1.4, vol: 0.2, lp: 800 }); [880, 1318, 1760].forEach((f, i) => tone({ f0: f, t0: 0.3 + i * 0.25, dur: 0.8, vol: 0.1 })); },
+  pyramid:  () => [261, 392, 523, 784].forEach((f, i) => tone({ type: 'triangle', f0: f, t0: i * 0.12, dur: 0.5, vol: 0.25 })),
+};
+function playSound(name) { if (!muted) { audio(); (sounds[name] || sounds.table)(); } }
+
+/* ---------- Per-shape soundtrack (generative loop) ---------- */
+const TRACKS = {
+  table:    { root: 220, chord: [0, 7, 12],     scale: [0, 2, 4, 7, 9],         pad: 'triangle', wave: 'triangle', step: 600,  lp: 1400, oct: 1, vol: 0.20, mode: 'random' },
+  sphere:   { root: 196, chord: [0, 7, 16],     scale: [0, 2, 4, 7, 11],        pad: 'sine',     wave: 'sine',     step: 520,  lp: 1600, oct: 1, vol: 0.22, mode: 'updown', swoosh: true },
+  helix:    { root: 220, chord: [0, 3, 7],      scale: [0, 3, 5, 7, 10],        pad: 'triangle', wave: 'triangle', step: 230,  lp: 1800, oct: 1, vol: 0.18, mode: 'updown' },
+  dna:      { root: 247, chord: [0, 4, 7],      scale: [0, 4, 7, 11, 12],       pad: 'sine',     wave: 'triangle', step: 420,  lp: 1800, oct: 1, vol: 0.18, mode: 'updown', harm: 7 },
+  grid:     { root: 165, chord: [0, 12],        scale: [0, 7, 12, 5, 3],        pad: 'square',   wave: 'square',   step: 150,  lp: 1500, oct: 1, vol: 0.10, mode: 'random' },
+  cylinder: { root: 110, chord: [0, 7, 12],     scale: [0, 3, 7, 10],           pad: 'sawtooth', wave: 'sine',     step: 1000, lp: 600,  oct: 2, vol: 0.30, mode: 'random', swoosh: true },
+  torus:    { root: 174, chord: [0, 5, 9],      scale: [0, 2, 5, 7, 9],         pad: 'sine',     wave: 'sine',     step: 340,  lp: 1500, oct: 1, vol: 0.22, mode: 'updown', swoosh: true },
+  galaxy:   { root: 130, chord: [0, 7, 14, 19], scale: [0, 2, 7, 9, 14],        pad: 'sine',     wave: 'sine',     step: 750,  lp: 1200, oct: 3, vol: 0.12, mode: 'random', swoosh: true },
+  heart:    { root: 196, chord: [0, 4, 7],      scale: [0, 4, 7, 12],           pad: 'sine',     wave: 'sine',     step: 860,  lp: 1200, oct: 1, vol: 0.20, mode: 'heart' },
+  wave:     { root: 196, chord: [0, 4, 7],      scale: [0, 2, 4, 5, 7, 9, 11],  pad: 'triangle', wave: 'sine',     step: 300,  lp: 1600, oct: 1, vol: 0.20, mode: 'updown' },
+  saturn:   { root: 98,  chord: [0, 7, 12, 19], scale: [0, 7, 12, 14, 19],      pad: 'sawtooth', wave: 'sine',     step: 900,  lp: 700,  oct: 3, vol: 0.15, mode: 'random', swoosh: true },
+  pyramid:  { root: 147, chord: [0, 7, 12],     scale: [0, 4, 7, 12],           pad: 'triangle', wave: 'triangle', step: 400,  lp: 1600, oct: 1, vol: 0.20, mode: 'up' },
+};
+const fr = (root, semi) => root * Math.pow(2, semi / 12);
+let track = null;
+
+function stopTrack() {
+  if (!track) return;
+  const old = track, t = actx.currentTime;
+  clearInterval(old.timer);
+  old.out.gain.cancelScheduledValues(t);
+  old.out.gain.setValueAtTime(Math.max(old.out.gain.value, 0.0001), t);
+  old.out.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
+  setTimeout(() => old.oscs.forEach(o => { try { o.stop(); } catch (e) {} }), 1000);
+  track = null;
+}
+
+function startTrack(name) {
+  stopTrack();          // always drop the old track first, even when muted
+  if (muted) return;
+  const c = audio();
+  const cfg = TRACKS[name] || TRACKS.table;
+  const out = c.createGain();
+  out.gain.setValueAtTime(0.0001, c.currentTime);
+  out.gain.exponentialRampToValueAtTime(1, c.currentTime + 1.5);
+  out.connect(master);
+
+  // sustained pad with a slowly breathing filter
+  const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = cfg.lp; lp.connect(out);
+  const lfo = c.createOscillator(), lfoG = c.createGain();
+  lfo.frequency.value = 0.15; lfoG.gain.value = cfg.lp * 0.4;
+  lfo.connect(lfoG); lfoG.connect(lp.frequency); lfo.start();
+  const oscs = cfg.chord.map(s => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = cfg.pad; o.frequency.value = fr(cfg.root, s + 12);
+    o.detune.value = (Math.random() - 0.5) * 12;
+    g.gain.value = 0.10; o.connect(g); g.connect(lp); o.start();
+    return o;
+  });
+  oscs.push(lfo);
+
+  // melodic / rhythmic layer
+  let step = 0;
+  const timer = setInterval(() => {
+    if (muted || c.state !== 'running') return;
+    if (cfg.mode === 'heart') {
+      [0, 0.24].forEach((d, k) => {
+        tone({ f0: k ? 140 : 170, f1: 50, t0: d, dur: 0.25, vol: 0.7 });
+        tone({ type: 'triangle', f0: k ? 280 : 340, f1: 100, t0: d, dur: 0.2, vol: 0.3 });
+      });
+    } else {
+      const sc = cfg.scale; let idx;
+      if (cfg.mode === 'up') idx = step % sc.length;
+      else if (cfg.mode === 'updown') { const n = sc.length * 2 - 2, k = step % n; idx = k < sc.length ? k : n - k; }
+      else idx = Math.floor(Math.random() * sc.length);
+      const semi = sc[idx] + cfg.oct * 12;
+      tone({ type: cfg.wave, f0: fr(cfg.root, semi), dur: cfg.step / 1000 * 1.6, vol: cfg.vol, lp: cfg.lp * 2 });
+      if (cfg.harm) tone({ type: cfg.wave, f0: fr(cfg.root, semi + cfg.harm), dur: cfg.step / 1000 * 1.6, vol: cfg.vol * 0.7, lp: cfg.lp * 2 });
+    }
+    if (cfg.swoosh && step % 8 === 0) noise({ dur: 2.5, f0: 300, f1: 4000, vol: 0.08 });
+    step++;
+  }, cfg.step);
+
+  track = { out, oscs, timer };
+}
+
+/* ---------- Movement sounds: whoosh + per-card ticks ---------- */
+let lastTick = 0;
+function tick(kind) {
+  if (muted || !actx || actx.state !== 'running') return;
+  const now = performance.now();
+  if (now - lastTick < 35) return;
+  lastTick = now;
+  const cfg = TRACKS[currentShape] || TRACKS.table;
+  const s = cfg.scale[Math.floor(Math.random() * cfg.scale.length)];
+  tone({ type: 'triangle', f0: fr(cfg.root, s + (kind ? 36 : 24)), dur: 0.12, vol: kind ? 0.09 : 0.05 });
+}
+function whoosh(duration) {
+  if (muted) return;
+  noise({ dur: duration / 1000, f0: 200, f1: 3000, vol: 0.18 });
+  tone({ f0: 90, f1: 360, dur: duration / 1000, vol: 0.18, lp: 1200 });
+}
+
+// browsers only allow sound after a user gesture: start the soundtrack on the first touch/click
+addEventListener('pointerdown', () => { if (!muted) { audio(); if (!track) startTrack(currentShape); } });
+document.getElementById('mute').addEventListener('click', e => {
+  muted = !muted;
+  if (master) master.gain.setTargetAtTime(muted ? 0 : 0.9, actx.currentTime, 0.05);
+  if (!muted) { audio(); if (!track) startTrack(currentShape); }
+  e.currentTarget.textContent = muted ? '🔇' : '🔊';
+});
+let currentShape = 'table';
+
+/* ---------- Transitions (Tween.js) ---------- */
+function transform(shapeTargets, duration = 1500) {
+  TWEEN.removeAll();
+  objects.forEach((obj, i) => {
+    const t = shapeTargets[i];
+    const delay = Math.random() * 400;
+    new TWEEN.Tween(obj.position)
+      .to({ x: t.position.x, y: t.position.y, z: t.position.z }, duration)
+      .delay(delay).easing(TWEEN.Easing.Exponential.InOut)
+      .onStart(() => tick(0)).onComplete(() => tick(1)).start();
+    new TWEEN.Tween(obj.rotation)
+      .to({ x: t.rotation.x, y: t.rotation.y, z: t.rotation.z }, duration)
+      .delay(delay).easing(TWEEN.Easing.Exponential.InOut).start();
+  });
+}
+
+document.querySelectorAll('#menu button[data-layout]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#menu button[data-layout]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentShape = btn.dataset.layout;
+    playSound(currentShape);
+    whoosh(1800);
+    startTrack(currentShape);
+    transform(targets[currentShape], 1800);
+    resetView();
+  });
+});
+
+/* ---------- Search, category filter & info panel ---------- */
+controls.keys = [];   // stop TrackballControls from hijacking A/S/D while typing
+const CATS = { alkali: 'Alkali metal', alkaline: 'Alkaline earth', transition: 'Transition metal', post: 'Post-transition', metalloid: 'Metalloid', nonmetal: 'Nonmetal', halogen: 'Halogen', noble: 'Noble gas', lanth: 'Lanthanide', actin: 'Actinide' };
+const cardInfo = DATA.map(([sym, name, mass, col, row], i) => ({ n: i + 1, sym, name, mass, col, row, cat: category(i + 1, col, row) }));
+const qEl = document.getElementById('search'), countEl = document.getElementById('count');
+const infoEl = document.getElementById('info'), legendEl = document.getElementById('legend');
+let activeCat = null;
+
+function applyFilter() {
+  const s = qEl.value.trim().toLowerCase(), on = !!(s || activeCat);
+  let hits = 0;
+  cardInfo.forEach((d, i) => {
+    const ok = (!activeCat || d.cat === activeCat) &&
+      (!s || d.name.toLowerCase().includes(s) || (KU[d.n - 1] || '').includes(s) || d.sym.toLowerCase().startsWith(s) || String(d.n) === s);
+    const el = objects[i].element;
+    el.classList.toggle('dim', on && !ok);
+    el.classList.toggle('hit', on && ok);
+    if (ok) hits++;
+  });
+  countEl.textContent = on ? hits + (hits === 1 ? ' match' : ' matches') : '';
+  if (on && !muted && actx) tone({ type: 'triangle', f0: 700, f1: 1000 + hits * 4, dur: 0.1, vol: 0.1 });
+}
+
+Object.entries(CATS).forEach(([k, label]) => {
+  const b = document.createElement('button');
+  b.className = 'chip cat-' + k; b.textContent = label;
+  b.addEventListener('click', () => {
+    activeCat = activeCat === k ? null : k;
+    legendEl.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b && activeCat === k));
+    applyFilter();
+  });
+  legendEl.appendChild(b);
+});
+qEl.addEventListener('input', applyFilter);
+
+let infoIndex = 0;
+function showInfo(i) {
+  infoIndex = i;
+  const d = cardInfo[i];
+  const pos = d.row >= 9 ? 'f-block · Period ' + (d.row - 3) : 'Group ' + d.col + ' · Period ' + d.row;
+  infoEl.className = 'cat-' + d.cat;
+  infoEl.style.display = 'flex';
+  document.getElementById('iSym').textContent = d.sym;
+  renderInfo(d);
+  if (!muted && actx) tone({ type: 'triangle', f0: 900, f1: 1400, dur: 0.12, vol: 0.12 });
+}
+document.getElementById('iClose').addEventListener('click', () => { infoEl.style.display = 'none'; });
+
+let downX = 0, downY = 0, lastTapI = -1, lastTapT = 0;
+objects.forEach((obj, i) => {
+  obj.element.addEventListener('pointerdown', e => { downX = e.clientX; downY = e.clientY; });
+  obj.element.addEventListener('click', e => {
+    if (Math.hypot(e.clientX - downX, e.clientY - downY) >= 6) return;   // it was a drag
+    const now = performance.now();
+    if (lastTapI === i && now - lastTapT < 350) { focusCard(i); lastTapI = -1; }   // deliberate double-tap
+    else { showInfo(i); lastTapI = i; lastTapT = now; }
+  });
+});
+
+/* ---------- Kurdish (Sorani) names + UI text ---------- */
+const KU = 'هایدرۆجین|هێلیۆم|لیسیۆم|بێریلیۆم|بۆرۆن|کاربۆن|نایتڕۆجین|ئۆکسجین|فلۆرین|نیۆن|سۆدیۆم|ماگنیسیۆم|ئەلەمنیۆم|سیلیکۆن|فۆسفۆر|گۆگرد|کلۆرین|ئارگۆن|پۆتاسیۆم|کالسیۆم|سکاندیۆم|تیتانیۆم|ڤانادیۆم|کرۆمیۆم|مەنگەنیز|ئاسن|کۆبالت|نیکڵ|مس|زنک|گالیۆم|جێرمانیۆم|ئارسێنیک|سیلینیۆم|برۆم|کریپتۆن|ڕوبیدیۆم|ستڕۆنشیۆم|ئیتریۆم|زیرکۆنیۆم|نایۆبیۆم|مۆلیبدێنۆم|تێکنیتیۆم|ڕوتینیۆم|ڕۆدیۆم|پالادیۆم|زیو|کادمیۆم|ئیندیۆم|قەڵ|ئەنتیمۆن|تێلۆریۆم|یۆد|زینۆن|سیزیۆم|باریۆم|لانتانۆم|سێریۆم|پراسیۆدیمیۆم|نیۆدیمیۆم|پرۆمیسیۆم|ساماریۆم|یۆڕۆپیۆم|گادۆلینیۆم|تێربیۆم|دیسپرۆسیۆم|هۆلمیۆم|ئێربیۆم|تولیۆم|ئیتەربیۆم|لۆتێتیۆم|هافنیۆم|تانتالیۆم|تەنگستن|ڕێنیۆم|ئۆسمیۆم|ئیریدیۆم|پلاتین|زێڕ|جیوە|تالیۆم|قوڕقوشم|بیسموت|پۆلۆنیۆم|ئەستاتین|ڕادۆن|فرانسیۆم|ڕادیۆم|ئاکتینیۆم|تۆریۆم|پرۆتاکتینیۆم|یۆرانیۆم|نێپتونیۆم|پلوتۆنیۆم|ئەمەریکیۆم|کیۆریۆم|بێرکلیۆم|کالیفۆرنیۆم|ئاینشتاینیۆم|فێرمیۆم|مێندەلیڤیۆم|نۆبلیۆم|لۆرێنسیۆم|ڕەزەرفۆردیۆم|دوبنیۆم|سیبۆرگیۆم|بۆهریۆم|هاسیۆم|مایتنەریۆم|دارمشتادتیۆم|ڕۆنتگێنیۆم|کۆپەرنیکیۆم|نیهۆنیۆم|فلێڕۆڤیۆم|مۆسکۆڤیۆم|لیڤەرمۆریۆم|تێنێسین|ئۆگانێسۆن'.split('|');
+const CATS_EN = Object.assign({}, CATS);
+let lang = 'ku';
+const T = {
+  ku: { shapes: { table: 'خشتە', sphere: 'گۆ', helix: 'هێلیکس', grid: 'تۆڕ', cylinder: 'سیلندەر', torus: 'تۆرەس', wave: 'شەپۆل', dna: 'دی ئێن ئەی', galaxy: 'گەلاکسی', heart: 'دڵ', saturn: 'زوحەل', pyramid: 'هەرەم' },
+    cats: { alkali: 'کانزای ئەلکالی', alkaline: 'ئەلکالینی خاک', transition: 'کانزای گواستراوە', post: 'دوای گواستنەوە', metalloid: 'نیمچەکانزا', nonmetal: 'نەکانزا', halogen: 'هالۆجین', noble: 'گازی نەجیب', lanth: 'لانتانیدەکان', actin: 'ئەکتینیدەکان' },
+    z: 'ژمارەی ئەتۆمی', m: 'بارستایی', p: 'پرۆتۆن', n: 'نیوترۆن ≈', e: 'ئەلیکترۆن', cfg: 'ڕێکخستنی ئەلیکترۆن', st: 'حاڵەت',
+    states: { g: 'گاز', l: 'شلە', s: 'ڕەق' }, ph: 'گەڕان بەدوای توخم...', focus: 'نزیک بکەوە',
+    modes: { cat: 'ڕەنگ: جۆر', mass: 'ڕەنگ: بارستایی', state: 'ڕەنگ: حاڵەت' },
+    hint: 'کارتێک دابگرە بۆ زانیاری · دوگمەی نزیککردنەوە · ⟲ بۆ گەڕانەوە', btn: 'EN' },
+  en: { cats: CATS_EN, z: 'Atomic number', m: 'Mass', p: 'Protons', n: 'Neutrons ≈', e: 'Electrons', cfg: 'Configuration', st: 'State',
+    states: { g: 'Gas', l: 'Liquid', s: 'Solid' }, ph: 'Search element, symbol or number…', focus: 'Focus',
+    modes: { cat: 'Color: Category', mass: 'Color: Mass', state: 'Color: State' },
+    hint: 'Tap a card for info · Tap Focus (or double-tap) to zoom in · ⟲ resets the view', btn: 'کوردی' }
+};
+const nm = d => lang === 'ku' ? KU[d.n - 1] : d.name;
+const cn = k => T[lang].cats[k];
+
+/* ---------- Element facts: config, state ---------- */
+const ORB = [['1s', 2], ['2s', 2], ['2p', 6], ['3s', 2], ['3p', 6], ['4s', 2], ['3d', 10], ['4p', 6], ['5s', 2], ['4d', 10], ['5p', 6], ['6s', 2], ['4f', 14], ['5d', 10], ['6p', 6], ['7s', 2], ['5f', 14], ['6d', 10], ['7p', 6]];
+function econfig(Z) { let r = Z; const out = []; for (const [l, c] of ORB) { if (r <= 0) break; const f = Math.min(c, r); out.push([l, f]); r -= f; } return out; }
+const sup = n => String(n).replace(/\d/g, c => '⁰¹²³⁴⁵⁶⁷⁸⁹'[c]);
+const ST = n => [1, 2, 7, 8, 9, 10, 17, 18, 36, 54, 86, 118].includes(n) ? 'g' : (n === 35 || n === 80) ? 'l' : 's';
+
+function renderInfo(d) {
+  const k = lang === 'ku', t = T[lang], Z = d.n, Nn = Math.round(d.mass) - Z;
+  const el = document.getElementById('iTxt');
+  el.style.direction = k ? 'rtl' : 'ltr'; el.style.textAlign = k ? 'right' : 'left';
+  el.innerHTML = `<b>${nm(d)}</b>${k ? ' · ' + d.name : ''}<br>${t.z}: ${Z} · ${t.m}: ${d.mass}<br>${cn(d.cat)} · ${t.st}: ${t.states[ST(Z)]}<br>` +
+    `<span class="dot" style="background:#ff5a5a"></span>${t.p} ${Z} <span class="dot" style="background:#5aa0ff"></span>${t.n} ${Nn} <span class="dot" style="background:#5ff"></span>${t.e} ${Z}<br>` +
+    `${t.cfg}: <span dir="ltr">${econfig(Z).map(([l, c]) => l + sup(c)).join(' ')}</span>`;
+  atomD = d; cancelAnimationFrame(atomRAF); drawAtom(0);
+}
+
+/* ---------- Atom viewer: nucleus (protons/neutrons) + tilted electron shells ---------- */
+let atomRAF = 0, atomD = null;
+function drawAtom(ts) {
+  const d = atomD;
+  if (!d || infoEl.style.display === 'none') return;
+  const g = document.getElementById('atom').getContext('2d');
+  g.clearRect(0, 0, 240, 240); g.save(); g.translate(120, 120);
+  const sh = [];
+  econfig(d.n).forEach(([l, c]) => { const n = +l[0]; sh[n - 1] = (sh[n - 1] || 0) + c; });
+  sh.forEach((cnt, k) => {
+    const r = 30 + k * (70 / sh.length), ry = r * (0.5 + 0.12 * (k % 3));
+    g.save(); g.rotate(k * 0.8); g.strokeStyle = 'rgba(100,255,220,.3)';
+    g.beginPath(); g.ellipse(0, 0, r, ry, 0, 0, 7); g.stroke();
+    g.fillStyle = '#5ff';
+    for (let e = 0; e < cnt; e++) { const a = ts / (900 + k * 500) + e * 6.283 / cnt; g.beginPath(); g.arc(r * Math.cos(a), ry * Math.sin(a), 3.2, 0, 7); g.fill(); }
+    g.restore();
+  });
+  const A = Math.round(d.mass), nr = Math.min(24, 4 + Math.cbrt(A) * 3.2);
+  for (let i = 0; i < A; i++) {
+    const u = (i + .5) / A, rr = nr * Math.cbrt(u), th = i * 2.399963, ph = Math.acos(1 - 2 * u);
+    g.fillStyle = Math.floor((i + 1) * d.n / A) > Math.floor(i * d.n / A) ? '#ff5a5a' : '#5aa0ff';
+    g.beginPath(); g.arc(rr * Math.sin(ph) * Math.cos(th), rr * Math.sin(ph) * Math.sin(th), 2.3, 0, 7); g.fill();
+  }
+  g.restore();
+  atomRAF = requestAnimationFrame(drawAtom);
+}
+
+/* ---------- Property color modes + legend ---------- */
+const hsl2rgb = (h, s, l) => { const a = s * Math.min(l, 1 - l), f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); }; return [f(0), f(8), f(4)].map(v => Math.round(v * 255)).join(','); };
+function applyColor(mode) {
+  const g = document.getElementById('grad'), t = T[lang];
+  cardInfo.forEach((d, i) => {
+    const el = objects[i].element;
+    const c = mode === 'mass' ? hsl2rgb(240 - 240 * Math.min(d.mass / 294, 1), 1, .6) : mode === 'state' ? { g: '80,220,255', l: '255,160,70', s: '190,190,215' }[ST(d.n)] : null;
+    if (c) el.style.setProperty('--c', c); else el.style.removeProperty('--c');
+  });
+  g.style.display = mode === 'cat' ? 'none' : 'flex';
+  if (mode === 'mass') { g.style.background = 'linear-gradient(90deg,' + [0, .25, .5, .75, 1].map(u => 'rgb(' + hsl2rgb(240 - 240 * u, 1, .6) + ')').join(',') + ')'; g.innerHTML = '<span>1</span><span>294</span>'; }
+  else if (mode === 'state') { g.style.background = 'linear-gradient(90deg,rgb(80,220,255) 33%,rgb(255,160,70) 33% 66%,rgb(190,190,215) 66%)'; g.innerHTML = `<span>${t.states.g}</span><span>${t.states.l}</span><span>${t.states.s}</span>`; }
+}
+
+function applyLang() {
+  const t = T[lang], k = lang === 'ku';
+  document.querySelectorAll('#menu button[data-layout]').forEach(b => { b.dataset.en = b.dataset.en || b.textContent; b.textContent = k ? t.shapes[b.dataset.layout] : b.dataset.en; });
+  [...legendEl.children].forEach((b, i) => { b.textContent = Object.values(t.cats)[i]; });
+  objects.forEach((o, i) => { o.element.querySelector('b').textContent = nm(cardInfo[i]); });
+  qEl.placeholder = t.ph;
+  document.getElementById('lang').textContent = t.btn;
+  document.getElementById('hint').textContent = t.hint;
+  document.getElementById('iFocus').textContent = t.focus;
+  const sel = document.getElementById('colorBy'), cur = sel.value || 'cat';
+  sel.innerHTML = Object.entries(t.modes).map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+  sel.value = cur; applyColor(cur);
+  if (infoEl.style.display !== 'none') renderInfo(cardInfo[infoIndex]);
+}
+document.getElementById('lang').addEventListener('click', () => { lang = lang === 'ku' ? 'en' : 'ku'; applyLang(); });
+document.getElementById('colorBy').addEventListener('change', e => applyColor(e.target.value));
+
+/* ---------- Presentation mode + shortcuts ---------- */
+let presTimer = 0;
+function setPres(on) {
+  document.body.classList.toggle('pres', on); clearInterval(presTimer);
+  if (!on) return;
+  const btns = [...document.querySelectorAll('#menu button[data-layout]')];
+  let i = btns.findIndex(b => b.classList.contains('active'));
+  resetView();
+  presTimer = setInterval(() => btns[++i % btns.length].click(), 7000);
+}
+document.getElementById('pres').addEventListener('click', () => setPres(true));
+document.getElementById('exitPres').addEventListener('click', () => setPres(false));
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') { if (e.key === 'Escape') e.target.blur(); return; }
+  if (e.key === '/') { e.preventDefault(); qEl.focus(); }
+  else if (e.key === 'p') setPres(!document.body.classList.contains('pres'));
+  else if (e.key === 'l') document.getElementById('lang').click();
+  else if (e.key === 'Escape') { setPres(false); resetView(); }
+});
+applyLang();
+
+/* ---------- Camera focus / reset (moves the orbit target too) ---------- */
+let focused = false;
+function flyTo(pos, target, ms) {
+  new TWEEN.Tween(camera.position).to({ x: pos.x, y: pos.y, z: pos.z }, ms).easing(TWEEN.Easing.Quadratic.InOut).start();
+  new TWEEN.Tween(controls.target).to({ x: target.x, y: target.y, z: target.z }, ms).easing(TWEEN.Easing.Quadratic.InOut).start();
+}
+function focusCard(i) {
+  const obj = objects[i];
+  scene.updateMatrixWorld(true);                       // account for the idle spin
+  const wp = obj.getWorldPosition(new THREE.Vector3());
+  const normal = obj.getWorldDirection(new THREE.Vector3());   // the card's front, in world space
+  focused = true;                                      // pause idle rotation so the card stays put
+  flyTo(wp.clone().addScaledVector(normal, 560), wp, 1000);
+}
+function resetView() {
+  focused = false;
+  camera.up.set(0, 1, 0);
+  flyTo(new THREE.Vector3(0, 0, 3000), new THREE.Vector3(0, 0, 0), 1000);
+}
+document.getElementById('iFocus').addEventListener('click', () => focusCard(infoIndex));
+document.getElementById('reset').addEventListener('click', resetView);
+
+/* ---------- Loop & resize ---------- */
+function render() { renderer.render(scene, camera); }
+function animate(time) {
+  requestAnimationFrame(animate);
+  TWEEN.update(time);
+  // idle rotation (eases back to flat when the Table layout is selected)
+  if (focused) {
+    // idle spin paused while a card is focused
+  } else if (currentShape === 'table') {
+    const turn = Math.PI * 2, target = Math.round(scene.rotation.y / turn) * turn;
+    scene.rotation.y += (target - scene.rotation.y) * 0.05;
+  } else {
+    scene.rotation.y += 0.0012;
+  }
+  controls.update();
+  render();
+}
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  render();
+});
+
+transform(targets.table, 2000);
+animate();
+</script>
+</body>
+</html>
