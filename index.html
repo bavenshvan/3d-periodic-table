@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Grade 12 Chemistry · 3D Periodic Table &amp; Reaction Lab</title>
+<style>
+
+:root{--bg:#02030a;--card:rgba(9,14,32,.92);--line:#2b4580;--tx:#fff;--mut:#d3e0f7;--cy:#29f0ff;--bl:#4d8dff;--or:#ffb02e;--gr:#43ff9a;--rd:#ff5c7a;--vi:#c9a8ff}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#02030a;color:#fff;font:16px/1.5 "Segoe UI",Tahoma,system-ui,sans-serif}
+#cosmos{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+#container{z-index:1}
+#nav{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;background:linear-gradient(#02030a 60%,rgba(2,3,10,0))}
+#nav .brand{font-weight:800;color:var(--cy);text-shadow:0 0 12px rgba(41,240,255,.7)}
+#tabs{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+#tabs button,#nav>button{cursor:pointer;color:#fff;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:14px;font-weight:700}
+#tabs button.on{border-color:var(--cy);color:var(--cy);box-shadow:0 0 14px rgba(41,240,255,.6)}
+body:not([data-tab="table"]) :is(#container,#menu,#tools,#hint){display:none}
+body.pres #nav{display:none}
+#chem{position:fixed;left:0;right:0;bottom:0;top:var(--navh,56px);overflow:auto;-webkit-overflow-scrolling:touch;padding:6px 14px calc(28px + env(safe-area-inset-bottom,0px));z-index:5;display:none}
+body:not([data-tab="table"]) #chem{display:block}
+#chem section{display:none;max-width:1100px;margin:0 auto}#chem section.on{display:block}
+#chem h2{font-size:19px;margin:18px 0 8px;color:var(--cy)}
+#chem .fm,#eq,#sf{direction:ltr;unicode-bidi:isolate}
+#chem .card .nm{font-weight:700}
+.card{touch-action:pan-y}
+#chem ul{margin:8px 0 0;padding-inline-start:22px}
+.tag{line-height:1.35;font-weight:800}.tag.sa{box-shadow:0 0 10px rgba(255,92,122,.75)}.tag.wa{box-shadow:0 0 10px rgba(201,168,255,.65)}
+.sb{background:rgba(77,141,255,.22);color:#9cc2ff;border:1px solid var(--bl);box-shadow:0 0 10px rgba(77,141,255,.8)}
+.wb{background:rgba(255,176,46,.18);color:var(--or);border:1px solid var(--or);box-shadow:0 0 10px rgba(255,176,46,.65)}
+#ab .card .sym{font-size:24px;overflow-wrap:anywhere}#chem li{margin:4px 0}
+@media(max-width:520px){#tabs button,#nav>button{padding:7px 9px;font-size:13px}.grid{grid-template-columns:repeat(auto-fill,minmax(135px,1fr))}}
+
+/* ===== 3D periodic table ===== */
+* { box-sizing: border-box; }
+#container { position: fixed; inset: 0; }
+
+#menu { position: fixed; top: calc(var(--navh, 56px) + 6px); left: 0; right: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 0 12px; }
+#menu button { cursor: pointer; color: #9ff; background: rgba(20, 40, 70, .45); border: 1px solid rgba(100, 255, 220, .4); border-radius: 999px; padding: 8px 16px; font-size: 13px; letter-spacing: .05em; transition: .2s; }
+#menu button:hover { background: rgba(80, 255, 220, .25); box-shadow: 0 0 14px rgba(80, 255, 220, .6); }
+#menu button.active { background: rgba(80, 255, 220, .35); color: #fff; box-shadow: 0 0 16px rgba(80, 255, 220, .8); }
+#hint { position: fixed; bottom: 12px; width: 100%; text-align: center; font-size: 12px; opacity: .85; pointer-events: none; text-shadow: 0 0 6px #000; }
+
+/* Element card */
+.element {
+  --c: 80, 220, 255;
+  width: 120px; height: 160px; padding: 8px 10px;
+  border-radius: 10px; cursor: pointer; user-select: none;
+  background: linear-gradient(135deg, rgba(var(--c), .22), rgba(var(--c), .05));
+  border: 1px solid rgba(var(--c), .55);
+  box-shadow: 0 0 8px rgba(var(--c), .4);
+  text-align: center; transition: border-color .2s;
+}
+.element:hover { background: linear-gradient(135deg, rgba(var(--c), .55), rgba(var(--c), .2)); border-color: rgba(var(--c), 1); box-shadow: 0 0 34px rgba(var(--c), .95), inset 0 0 24px rgba(var(--c), .35); }
+.element .number { position: absolute; top: 8px; right: 10px; font-size: 12px; opacity: .8; }
+.element .symbol { position: absolute; top: 38px; left: 0; right: 0; font-size: 56px; font-weight: 700; color: #fff; text-shadow: 0 0 5px rgba(var(--c), 1); }
+.element .details { position: absolute; bottom: 12px; left: 0; right: 0; font-size: 12px; line-height: 1.5; color: rgba(255, 255, 255, .95); }
+.element .details b { display: block; font-size: 13px; color: #fff; font-weight: 600; }
+
+.cat-alkali    { --c: 255, 90, 90; }
+.cat-alkaline  { --c: 255, 160, 70; }
+.cat-transition{ --c: 255, 220, 80; }
+.cat-post      { --c: 120, 255, 140; }
+.cat-metalloid { --c: 70, 230, 190; }
+.cat-nonmetal  { --c: 80, 170, 255; }
+.cat-halogen   { --c: 170, 120, 255; }
+.cat-noble     { --c: 255, 110, 220; }
+.cat-lanth     { --c: 190, 220, 255; }
+.cat-actin     { --c: 255, 150, 170; }
+
+/* search / filter / info */
+#tools { position: fixed; left: 0; right: 0; bottom: calc(30px + env(safe-area-inset-bottom, 0px)); z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 12px; pointer-events: none; }
+#tools > * { pointer-events: auto; }
+#legend { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 760px; }
+.chip { --c: 80, 220, 255; cursor: pointer; font-size: 11px; padding: 4px 10px; border-radius: 999px; color: rgb(var(--c)); background: rgba(var(--c), .12); border: 1px solid rgba(var(--c), .7); }
+.chip.on { background: rgba(var(--c), .5); color: #fff; box-shadow: 0 0 12px rgba(var(--c), .9); }
+#searchRow { display: flex; align-items: center; gap: 10px; }
+#search { width: min(280px, 70vw); padding: 9px 16px; font-size: 16px; color: #fff; background: rgba(20, 40, 70, .55); border: 1px solid rgba(100, 255, 220, .5); border-radius: 999px; outline: none; }
+#search:focus { box-shadow: 0 0 16px rgba(80, 255, 220, .7); }
+#count { font-size: 12px; color: #9ff; min-width: 70px; }
+#info { display: none; align-items: center; gap: 14px; padding: 10px 16px; border-radius: 14px; background: rgba(10, 25, 50, .92); border: 1px solid rgba(100, 255, 220, .5); box-shadow: 0 0 24px rgba(80, 255, 220, .35); }
+#info .big { font-size: 40px; font-weight: 700; text-shadow: 0 0 14px rgba(var(--c), 1); color: #fff; min-width: 56px; text-align: center; }
+#info .txt { font-size: 13px; line-height: 1.5; color: rgba(255, 255, 255, .85); }
+#info .txt b { font-size: 16px; color: #fff; }
+#info .x { cursor: pointer; background: none; border: 0; color: #9ff; font-size: 20px; }
+.element { transition: opacity .4s, border-color .2s; }
+#info { flex-wrap: wrap; justify-content: center; max-width: 94vw; }
+#atom { width: 120px; height: 120px; }
+#grad { display: none; justify-content: space-between; width: min(300px, 70vw); height: 16px; line-height: 16px; padding: 0 8px; border-radius: 8px; color: #001; font-size: 10px; font-weight: 700; }
+#colorBy { color: #9ff; background: rgba(20, 40, 70, .45); border: 1px solid rgba(100, 255, 220, .4); border-radius: 999px; padding: 7px 10px; font-size: 12px; }
+#exitPres { display: none; position: fixed; top: 12px; right: 12px; z-index: 20; }
+body.pres #menu, body.pres #tools, body.pres #hint { display: none; }
+body.pres #exitPres { display: block; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 3px; }
+.act { cursor: pointer; color: #fff; background: rgba(80, 255, 220, .3); border: 1px solid rgba(100, 255, 220, .6); border-radius: 999px; padding: 6px 12px; font-size: 12px; }
+.element.dim { opacity: .12; }
+.element.hit { border-color: #fff; box-shadow: 0 0 14px rgba(var(--c), 1); }
+@media (max-width: 600px) { #menu button { padding: 6px 12px; font-size: 12px; } }
+
+
+/* ===== chemistry tabs ===== */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;perspective:900px}
+.card{--rx:0deg;--ry:0deg;background:linear-gradient(145deg,#111c36,#0a1020);border:1px solid var(--line);border-radius:14px;padding:12px;transform:rotateX(var(--rx)) rotateY(var(--ry));transform-style:preserve-3d;transition:transform .15s,box-shadow .2s;touch-action:manipulation}
+.card:hover{box-shadow:0 0 22px rgba(61,123,255,.55);border-color:var(--bl)}
+.card .sym{font-size:30px;font-weight:800;transform:translateZ(36px)}
+.card .nm{font-size:13px;transform:translateZ(20px);color:var(--tx)}
+.card .ku{font-size:13px;transform:translateZ(14px);color:var(--mut)}
+.card .tag{transform:translateZ(26px)}
+.tag{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;margin-top:6px}
+.cat{background:rgba(34,229,255,.15);color:var(--cy);border:1px solid var(--cy)}
+.an{background:rgba(255,154,46,.15);color:var(--or);border:1px solid var(--or)}
+.sa{background:rgba(255,77,109,.15);color:var(--rd);border:1px solid var(--rd)}
+.wa{background:rgba(181,140,255,.15);color:var(--vi);border:1px solid var(--vi)}
+.sol{background:rgba(56,242,141,.15);color:var(--gr);border:1px solid var(--gr)}
+.ppt{background:rgba(255,154,46,.2);color:var(--or);border:1px solid var(--or)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px}
+#chem select,#chem button.go{font:inherit;color:var(--tx);background:#0a1020;border:1px solid var(--bl);border-radius:10px;padding:10px;min-width:130px}
+button.go{cursor:pointer;background:linear-gradient(90deg,var(--bl),var(--cy));color:#001;font-weight:800;border:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.big{font-size:26px;font-weight:800}
+.cchips{display:flex;gap:8px;flex-wrap:wrap}
+.cchip{cursor:pointer;border:1px solid var(--line);background:#0a1020;color:var(--tx);border-radius:10px;padding:8px 12px;font-size:15px;font-weight:600}
+.cchip.A{border-color:var(--cy);box-shadow:0 0 12px rgba(34,229,255,.6)}
+.cchip.B{border-color:var(--or);box-shadow:0 0 12px rgba(255,154,46,.6)}
+#cv{width:100%;height:380px;display:block;border-radius:14px;border:1px solid var(--line);background:#060b18;touch-action:none}
+.eq{font-size:18px;word-break:break-word}
+.mut{color:var(--mut);font-size:14px}
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/renderers/CSS3DRenderer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/TrackballControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+</head>
+<body data-tab="table">
+<canvas id="cosmos"></canvas>
+<nav id="nav"><b class="brand">⚗️ Chem 12</b>
+  <div id="tabs"><button data-t="table" class="on"></button><button data-t="ions"></button><button data-t="ab"></button><button data-t="sol"></button><button data-t="lab"></button></div>
+  <button id="lang">EN</button></nav>
+<div id="container"></div>
+<header id="menu">
+  <button data-layout="table" class="active">Table</button>
+  <button data-layout="sphere">Sphere</button>
+  <button data-layout="helix">Helix</button>
+  <button data-layout="grid">Grid</button>
+  <button data-layout="cylinder">Cylinder</button>
+  <button data-layout="torus">Torus</button>
+  <button data-layout="wave">Sine Wave</button>
+  <button data-layout="dna">DNA</button>
+  <button data-layout="galaxy">Galaxy</button>
+  <button data-layout="heart">Heart</button>
+  <button data-layout="saturn">Saturn</button>
+  <button data-layout="pyramid">Pyramid</button>
+  <select id="colorBy"></select>
+  <button id="pres" title="Presentation">▶</button>
+  <button id="spin" title="Auto-rotate">↻</button>
+  <button id="reset" title="Reset view">⟲</button>
+  <button id="mute" title="Toggle sound">🔊</button>
+</header>
+<button class="act" id="exitPres">✕</button>
+<div id="tools">
+  <div id="grad"></div>
+  <div id="info"><div class="big" id="iSym"></div><div class="txt" id="iTxt"></div><canvas id="atom" width="240" height="240"></canvas><button class="act" id="iFocus">Focus</button><button class="x" id="iClose">×</button></div>
+  <div id="legend"></div>
+  <div id="searchRow"><input id="search" type="search" placeholder="Search element, symbol or number…" autocomplete="off"><span id="count"></span></div>
+</div>
+<div id="hint">Drag to rotate · Pinch/scroll to zoom · Tap a card for info · Tap Focus (or double-tap) to zoom in · ⟲ resets the view</div>
+<main id="chem" dir="rtl">
+<section id="ions"><div class="row" id="ionsHead"></div><h2 id="hCat"></h2><div class="grid" id="gCat"></div><h2 id="hAn"></h2><div class="grid" id="gAn"></div></section>
+<section id="ab"><h2 id="hAcid"></h2><div class="grid" id="gAcid"></div><h2 id="hBase"></h2><div class="grid" id="gBase"></div><div class="panel" id="naming"></div></section>
+<section id="sol"><h2 id="hChk"></h2><div class="row"><select id="sc"></select><select id="sa"></select></div><div class="panel"><div class="big fm" id="sf"></div><div id="sr" style="margin-top:6px"></div><div class="mut" id="sw"></div></div><div class="panel" id="rules"></div></section>
+<section id="lab"><h2 id="hLab"></h2><div class="mut" id="inst"></div><div class="cchips panel" id="cchips"></div><div class="row" style="margin:10px 0"><button class="go" id="mix"></button><span id="pick" class="mut"></span></div><canvas id="cv"></canvas><div class="panel"><div class="eq" id="eq">—</div><div class="eq" dir="auto" id="net" style="margin-top:8px"></div><div class="mut" dir="auto" id="spec" style="margin-top:8px"></div></div></section>
+</main>
+<script>
+
+/* ---------- Data: [symbol, name, mass, column, row] in atomic-number order ---------- */
+const DATA = [
+['H','Hydrogen',1.008,1,1],['He','Helium',4.0026,18,1],
+['Li','Lithium',6.94,1,2],['Be','Beryllium',9.0122,2,2],['B','Boron',10.81,13,2],['C','Carbon',12.011,14,2],['N','Nitrogen',14.007,15,2],['O','Oxygen',15.999,16,2],['F','Fluorine',18.998,17,2],['Ne','Neon',20.18,18,2],
+['Na','Sodium',22.99,1,3],['Mg','Magnesium',24.305,2,3],['Al','Aluminium',26.982,13,3],['Si','Silicon',28.085,14,3],['P','Phosphorus',30.974,15,3],['S','Sulfur',32.06,16,3],['Cl','Chlorine',35.45,17,3],['Ar','Argon',39.948,18,3],
+['K','Potassium',39.098,1,4],['Ca','Calcium',40.078,2,4],['Sc','Scandium',44.956,3,4],['Ti','Titanium',47.867,4,4],['V','Vanadium',50.942,5,4],['Cr','Chromium',51.996,6,4],['Mn','Manganese',54.938,7,4],['Fe','Iron',55.845,8,4],['Co','Cobalt',58.933,9,4],['Ni','Nickel',58.693,10,4],['Cu','Copper',63.546,11,4],['Zn','Zinc',65.38,12,4],['Ga','Gallium',69.723,13,4],['Ge','Germanium',72.63,14,4],['As','Arsenic',74.922,15,4],['Se','Selenium',78.971,16,4],['Br','Bromine',79.904,17,4],['Kr','Krypton',83.798,18,4],
+['Rb','Rubidium',85.468,1,5],['Sr','Strontium',87.62,2,5],['Y','Yttrium',88.906,3,5],['Zr','Zirconium',91.224,4,5],['Nb','Niobium',92.906,5,5],['Mo','Molybdenum',95.95,6,5],['Tc','Technetium',98,7,5],['Ru','Ruthenium',101.07,8,5],['Rh','Rhodium',102.91,9,5],['Pd','Palladium',106.42,10,5],['Ag','Silver',107.87,11,5],['Cd','Cadmium',112.41,12,5],['In','Indium',114.82,13,5],['Sn','Tin',118.71,14,5],['Sb','Antimony',121.76,15,5],['Te','Tellurium',127.6,16,5],['I','Iodine',126.9,17,5],['Xe','Xenon',131.29,18,5],
+['Cs','Caesium',132.91,1,6],['Ba','Barium',137.33,2,6],
+['La','Lanthanum',138.91,3,9],['Ce','Cerium',140.12,4,9],['Pr','Praseodymium',140.91,5,9],['Nd','Neodymium',144.24,6,9],['Pm','Promethium',145,7,9],['Sm','Samarium',150.36,8,9],['Eu','Europium',151.96,9,9],['Gd','Gadolinium',157.25,10,9],['Tb','Terbium',158.93,11,9],['Dy','Dysprosium',162.5,12,9],['Ho','Holmium',164.93,13,9],['Er','Erbium',167.26,14,9],['Tm','Thulium',168.93,15,9],['Yb','Ytterbium',173.05,16,9],['Lu','Lutetium',174.97,17,9],
+['Hf','Hafnium',178.49,4,6],['Ta','Tantalum',180.95,5,6],['W','Tungsten',183.84,6,6],['Re','Rhenium',186.21,7,6],['Os','Osmium',190.23,8,6],['Ir','Iridium',192.22,9,6],['Pt','Platinum',195.08,10,6],['Au','Gold',196.97,11,6],['Hg','Mercury',200.59,12,6],['Tl','Thallium',204.38,13,6],['Pb','Lead',207.2,14,6],['Bi','Bismuth',208.98,15,6],['Po','Polonium',209,16,6],['At','Astatine',210,17,6],['Rn','Radon',222,18,6],
+['Fr','Francium',223,1,7],['Ra','Radium',226,2,7],
+['Ac','Actinium',227,3,10],['Th','Thorium',232.04,4,10],['Pa','Protactinium',231.04,5,10],['U','Uranium',238.03,6,10],['Np','Neptunium',237,7,10],['Pu','Plutonium',244,8,10],['Am','Americium',243,9,10],['Cm','Curium',247,10,10],['Bk','Berkelium',247,11,10],['Cf','Californium',251,12,10],['Es','Einsteinium',252,13,10],['Fm','Fermium',257,14,10],['Md','Mendelevium',258,15,10],['No','Nobelium',259,16,10],['Lr','Lawrencium',266,17,10],
+['Rf','Rutherfordium',267,4,7],['Db','Dubnium',268,5,7],['Sg','Seaborgium',269,6,7],['Bh','Bohrium',270,7,7],['Hs','Hassium',277,8,7],['Mt','Meitnerium',278,9,7],['Ds','Darmstadtium',281,10,7],['Rg','Roentgenium',282,11,7],['Cn','Copernicium',285,12,7],['Nh','Nihonium',286,13,7],['Fl','Flerovium',289,14,7],['Mc','Moscovium',290,15,7],['Lv','Livermorium',293,16,7],['Ts','Tennessine',294,17,7],['Og','Oganesson',294,18,7]
+];
+
+function category(n, col, row) {
+  if (row === 9) return 'lanth';
+  if (row === 10) return 'actin';
+  if (n === 1) return 'nonmetal';
+  if (col === 18) return 'noble';
+  if (col === 17) return 'halogen';
+  if (col === 1) return 'alkali';
+  if (col === 2) return 'alkaline';
+  if (col >= 3 && col <= 12) return 'transition';
+  if ([5, 14, 32, 33, 51, 52].includes(n)) return 'metalloid';
+  if ([6, 7, 8, 15, 16, 34].includes(n)) return 'nonmetal';
+  return 'post';
+}
+
+/* ---------- Scene setup ---------- */
+const container = document.getElementById('container');
+const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 1, 10000);
+camera.position.z = 3000;
+const scene = new THREE.Scene();
+const renderer = new THREE.CSS3DRenderer();
+renderer.setSize(innerWidth, innerHeight);
+container.appendChild(renderer.domElement);
+
+const controls = new THREE.TrackballControls(camera, renderer.domElement);
+controls.minDistance = 500;
+controls.maxDistance = 6000;
+controls.rotateSpeed = 2;
+
+/* ---------- Build cards ---------- */
+const objects = [];
+DATA.forEach(([sym, name, mass, col, row], i) => {
+  const n = i + 1;
+  const el = document.createElement('div');
+  el.className = `element cat-${category(n, col, row)}`;
+  el.innerHTML = `
+    <div class="number">${n}</div>
+    <div class="symbol">${sym}</div>
+    <div class="details"><b>${name}</b>${mass}</div>`;
+  const obj = new THREE.CSS3DObject(el);
+  obj.position.set(Math.random() * 4000 - 2000, Math.random() * 4000 - 2000, Math.random() * 4000 - 2000);
+  scene.add(obj);
+  objects.push(obj);
+  obj.userData.tablePos = [col, row];
+});
+
+/* ---------- Layout targets: each returns an Object3D with position + orientation ---------- */
+const N = objects.length;
+const origin = new THREE.Vector3();
+const vec = new THREE.Vector3();
+
+function makeTargets(fn) {
+  return objects.map((_, i) => {
+    const t = new THREE.Object3D();
+    fn(t, i);
+    return t;
+  });
+}
+
+const builders = {
+  table: () => makeTargets((t, i) => {
+    const [c, r] = objects[i].userData.tablePos;
+    t.position.set(c * 140 - 1330, -(r * 180) + 990, 0);
+  }),
+
+  sphere: () => makeTargets((t, i) => {
+    const phi = Math.acos(-1 + (2 * i) / N);
+    const theta = Math.sqrt(N * Math.PI) * phi;
+    t.position.setFromSphericalCoords(800, phi, theta);
+    vec.copy(t.position).multiplyScalar(2);
+    t.lookAt(vec);
+  }),
+
+  helix: () => makeTargets((t, i) => {
+    const theta = i * 0.175 + Math.PI;
+    const y = -(i * 8) + 450;
+    t.position.setFromCylindricalCoords(900, theta, y);
+    vec.set(t.position.x * 2, t.position.y, t.position.z * 2);
+    t.lookAt(vec);
+  }),
+
+  grid: () => makeTargets((t, i) => {
+    t.position.set(
+      (i % 5) * 400 - 800,
+      (-(Math.floor(i / 5) % 5) * 400) + 800,
+      Math.floor(i / 25) * 1000 - 2000
+    );
+  }),
+
+  cylinder: () => makeTargets((t, i) => {
+    const perRing = 20, ring = Math.floor(i / perRing), k = i % perRing;
+    const theta = (k / perRing) * Math.PI * 2 + ring * 0.2;
+    t.position.setFromCylindricalCoords(1000, theta, ring * 220 - 650);
+    vec.set(0, t.position.y, 0);      // face inward (tunnel)
+    t.lookAt(vec);
+  }),
+
+  torus: () => makeTargets((t, i) => {
+    const R = 1000, r = 380;
+    const u = (i / N) * Math.PI * 2 * 1;           // around the ring
+    const v = i * 0.55;                             // around the tube
+    t.position.set(
+      (R + r * Math.cos(v)) * Math.cos(u),
+      r * Math.sin(v),
+      (R + r * Math.cos(v)) * Math.sin(u)
+    );
+    vec.set(R * Math.cos(u), 0, R * Math.sin(u));   // tube centre line
+    vec.multiplyScalar(2).sub(t.position);          // look outward from tube centre
+    t.lookAt(vec);
+  }),
+
+  wave: () => makeTargets((t, i) => {
+    const cols = 12, x = i % cols, z = Math.floor(i / cols);
+    const px = x * 260 - (cols - 1) * 130;
+    const pz = z * 260 - 1200;
+    const y = Math.sin(x * 0.7) * 260 + Math.cos(z * 0.7) * 260;
+    t.position.set(px, y, pz);
+    // tilt to follow surface slope
+    t.rotation.set(Math.sin(z * 0.7) * 0.5 - Math.PI / 8, 0, -Math.cos(x * 0.7) * 0.5);
+  }),
+};
+
+/* ---------- targets: Object3D per card, per shape ---------- */
+/* ---------- Extra shapes ---------- */
+Object.assign(builders, {
+  dna: () => makeTargets((t, i) => {            // two intertwined strands
+    const k = i >> 1, strand = i & 1;
+    t.position.setFromCylindricalCoords(450, k * 0.3 + strand * Math.PI, (k - 29.5) * 24);
+    vec.set(t.position.x * 2, t.position.y, t.position.z * 2);
+    t.lookAt(vec);
+  }),
+
+  galaxy: () => makeTargets((t, i) => {         // 3 spiral arms
+    const arm = i % 3, u = Math.floor(i / 3) / (N / 3);
+    const r = 300 + u * 1200, ang = arm * Math.PI * 2 / 3 + u * 7;
+    t.position.set(r * Math.cos(ang), r * Math.sin(ang), Math.sin(i * 12.9898) * 120);
+  }),
+
+  heart: () => makeTargets((t, i) => {
+    const a = (i * 2.399963) % (Math.PI * 2), s = Math.sqrt((i + 1) / N), k = 70;
+    const hx = 16 * Math.pow(Math.sin(a), 3);
+    const hy = 13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a);
+    t.position.set(hx * k * s, hy * k * s + 60, Math.sin(i * 3.7) * 60);
+  }),
+
+  saturn: () => {                               // planet + 2 tilted rings
+    const tilt = new THREE.Euler(0.45, 0, 0.3);
+    const normal = new THREE.Vector3(0, 1, 0).applyEuler(tilt);
+    return makeTargets((t, i) => {
+      if (i < 38) {
+        const phi = Math.acos(-1 + (2 * i) / 38), theta = Math.sqrt(38 * Math.PI) * phi;
+        t.position.setFromSphericalCoords(330, phi, theta);
+        vec.copy(t.position).multiplyScalar(2);
+        t.lookAt(vec);
+      } else {
+        const j = i - 38, inner = j < 36, n = inner ? 36 : 44, k = inner ? j : j - 36;
+        const R = inner ? 700 : 880, a = (k / n) * Math.PI * 2;
+        t.position.set(R * Math.cos(a), 0, R * Math.sin(a)).applyEuler(tilt);
+        vec.copy(t.position).add(normal);
+        t.lookAt(vec);
+      }
+    });
+  },
+
+  pyramid: () => makeTargets((t, i) => {         // stacked square layers 1,4,9,16...
+    let rem = i, l = 0;
+    while (rem >= (l + 1) * (l + 1)) { rem -= (l + 1) * (l + 1); l++; }
+    const n = l + 1, gx = rem % n, gz = Math.floor(rem / n);
+    t.position.set((gx - (n - 1) / 2) * 230, 700 - l * 230, (gz - (n - 1) / 2) * 230);
+  }),
+});
+
+const targets = {};
+for (const name in builders) targets[name] = builders[name]();
+
+/* ---------- Web Audio sound synth ---------- */
+let actx = null, master = null, muted = false;
+function audio() {
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  if (!actx) {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    master = actx.createGain();
+    master.gain.value = muted ? 0 : 0.9;
+    const comp = actx.createDynamicsCompressor();
+    master.connect(comp); comp.connect(actx.destination);
+  }
+  if (actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function tone({ type = 'sine', f0 = 440, f1 = f0, t0 = 0, dur = 0.5, vol = 0.3, lp = 0 }) {
+  const c = audio(), t = c.currentTime + t0;
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(Math.max(f1, 1), t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.05, dur / 4));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  if (lp) {
+    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp;
+    o.connect(f); f.connect(g);
+  } else o.connect(g);
+  g.connect(master);
+  o.start(t); o.stop(t + dur + 0.05);
+}
+function noise({ t0 = 0, dur = 1, vol = 0.15, f0 = 500, f1 = 3000 }) {
+  const c = audio(), t = c.currentTime + t0;
+  const buf = c.createBuffer(1, Math.ceil(c.sampleRate * dur), c.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const src = c.createBufferSource(); src.buffer = buf;
+  const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 2;
+  bp.frequency.setValueAtTime(f0, t);
+  bp.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + dur * 0.3);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(bp); bp.connect(g); g.connect(master);
+  src.start(t);
+}
+const sounds = {
+  table:    () => [523, 659, 784].forEach((f, i) => tone({ type: 'triangle', f0: f, t0: i * 0.09, dur: 0.6, vol: 0.25 })),
+  sphere:   () => { tone({ f0: 180, f1: 900, dur: 1, vol: 0.3 }); tone({ f0: 360, f1: 1800, dur: 1, vol: 0.1 }); },
+  helix:    () => [262, 330, 392, 494, 523, 659, 784, 988].forEach((f, i) => tone({ type: 'triangle', f0: f, t0: i * 0.07, dur: 0.3, vol: 0.22 })),
+  dna:      () => { tone({ f0: 300, f1: 600, dur: 1.2, vol: 0.25 }); tone({ f0: 303, f1: 450, dur: 1.2, vol: 0.25 }); tone({ f0: 900, f1: 1200, t0: 0.6, dur: 0.6, vol: 0.08 }); },
+  grid:     () => [600, 800, 700, 900, 750, 1000].forEach((f, i) => tone({ type: 'square', f0: f, t0: i * 0.08, dur: 0.07, vol: 0.12, lp: 2000 })),
+  cylinder: () => { tone({ type: 'sawtooth', f0: 80, f1: 160, dur: 1.4, vol: 0.3, lp: 500 }); noise({ dur: 1.4, f0: 200, f1: 1200, vol: 0.1 }); },
+  torus:    () => { tone({ f0: 220, f1: 660, dur: 0.7, vol: 0.28 }); tone({ f0: 660, f1: 220, t0: 0.7, dur: 0.7, vol: 0.28 }); },
+  galaxy:   () => { noise({ dur: 1.6, f0: 300, f1: 6000, vol: 0.15 }); for (let i = 0; i < 6; i++) tone({ f0: 1200 + Math.random() * 2000, t0: 0.2 + i * 0.2, dur: 0.4, vol: 0.06 }); },
+  heart:    () => [0, 0.22, 0.8, 1.02].forEach((t0, i) => tone({ f0: i % 2 ? 70 : 100, f1: 40, t0, dur: 0.2, vol: 0.6 })),
+  wave:     () => [0, 0.5, 1].forEach(t0 => { tone({ f0: 300, f1: 600, t0, dur: 0.25, vol: 0.22 }); tone({ f0: 600, f1: 300, t0: t0 + 0.25, dur: 0.25, vol: 0.22 }); }),
+  saturn:   () => { tone({ type: 'square', f0: 110, f1: 220, dur: 1.4, vol: 0.2, lp: 800 }); [880, 1318, 1760].forEach((f, i) => tone({ f0: f, t0: 0.3 + i * 0.25, dur: 0.8, vol: 0.1 })); },
+  pyramid:  () => [261, 392, 523, 784].forEach((f, i) => tone({ type: 'triangle', f0: f, t0: i * 0.12, dur: 0.5, vol: 0.25 })),
+};
+function playSound(name) { if (!muted) { audio(); (sounds[name] || sounds.table)(); } }
+
+/* ---------- Per-shape soundtrack (generative loop) ---------- */
+const TRACKS = {
+  table:    { root: 220, chord: [0, 7, 12],     scale: [0, 2, 4, 7, 9],         pad: 'triangle', wave: 'triangle', step: 600,  lp: 1400, oct: 1, vol: 0.20, mode: 'random' },
+  sphere:   { root: 196, chord: [0, 7, 16],     scale: [0, 2, 4, 7, 11],        pad: 'sine',     wave: 'sine',     step: 520,  lp: 1600, oct: 1, vol: 0.22, mode: 'updown', swoosh: true },
+  helix:    { root: 220, chord: [0, 3, 7],      scale: [0, 3, 5, 7, 10],        pad: 'triangle', wave: 'triangle', step: 230,  lp: 1800, oct: 1, vol: 0.18, mode: 'updown' },
+  dna:      { root: 247, chord: [0, 4, 7],      scale: [0, 4, 7, 11, 12],       pad: 'sine',     wave: 'triangle', step: 420,  lp: 1800, oct: 1, vol: 0.18, mode: 'updown', harm: 7 },
+  grid:     { root: 165, chord: [0, 12],        scale: [0, 7, 12, 5, 3],        pad: 'square',   wave: 'square',   step: 150,  lp: 1500, oct: 1, vol: 0.10, mode: 'random' },
+  cylinder: { root: 110, chord: [0, 7, 12],     scale: [0, 3, 7, 10],           pad: 'sawtooth', wave: 'sine',     step: 1000, lp: 600,  oct: 2, vol: 0.30, mode: 'random', swoosh: true },
+  torus:    { root: 174, chord: [0, 5, 9],      scale: [0, 2, 5, 7, 9],         pad: 'sine',     wave: 'sine',     step: 340,  lp: 1500, oct: 1, vol: 0.22, mode: 'updown', swoosh: true },
+  galaxy:   { root: 130, chord: [0, 7, 14, 19], scale: [0, 2, 7, 9, 14],        pad: 'sine',     wave: 'sine',     step: 750,  lp: 1200, oct: 3, vol: 0.12, mode: 'random', swoosh: true },
+  heart:    { root: 196, chord: [0, 4, 7],      scale: [0, 4, 7, 12],           pad: 'sine',     wave: 'sine',     step: 860,  lp: 1200, oct: 1, vol: 0.20, mode: 'heart' },
+  wave:     { root: 196, chord: [0, 4, 7],      scale: [0, 2, 4, 5, 7, 9, 11],  pad: 'triangle', wave: 'sine',     step: 300,  lp: 1600, oct: 1, vol: 0.20, mode: 'updown' },
+  saturn:   { root: 98,  chord: [0, 7, 12, 19], scale: [0, 7, 12, 14, 19],      pad: 'sawtooth', wave: 'sine',     step: 900,  lp: 700,  oct: 3, vol: 0.15, mode: 'random', swoosh: true },
+  pyramid:  { root: 147, chord: [0, 7, 12],     scale: [0, 4, 7, 12],           pad: 'triangle', wave: 'triangle', step: 400,  lp: 1600, oct: 1, vol: 0.20, mode: 'up' },
+};
+const fr = (root, semi) => root * Math.pow(2, semi / 12);
+let track = null;
+
+function stopTrack() {
+  if (!track) return;
+  const old = track, t = actx.currentTime;
+  clearInterval(old.timer);
+  old.out.gain.cancelScheduledValues(t);
+  old.out.gain.setValueAtTime(Math.max(old.out.gain.value, 0.0001), t);
+  old.out.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
+  setTimeout(() => old.oscs.forEach(o => { try { o.stop(); } catch (e) {} }), 1000);
+  track = null;
+}
+
+function startTrack(name) {
+  stopTrack();          // always drop the old track first, even when muted
+  if (muted) return;
+  const c = audio();
+  const cfg = TRACKS[name] || TRACKS.table;
+  const out = c.createGain();
+  out.gain.setValueAtTime(0.0001, c.currentTime);
+  out.gain.exponentialRampToValueAtTime(1, c.currentTime + 1.5);
+  out.connect(master);
+
+  // sustained pad with a slowly breathing filter
+  const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = cfg.lp; lp.connect(out);
+  const lfo = c.createOscillator(), lfoG = c.createGain();
+  lfo.frequency.value = 0.15; lfoG.gain.value = cfg.lp * 0.4;
+  lfo.connect(lfoG); lfoG.connect(lp.frequency); lfo.start();
+  const oscs = cfg.chord.map(s => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = cfg.pad; o.frequency.value = fr(cfg.root, s + 12);
+    o.detune.value = (Math.random() - 0.5) * 12;
+    g.gain.value = 0.10; o.connect(g); g.connect(lp); o.start();
+    return o;
+  });
+  oscs.push(lfo);
+
+  // melodic / rhythmic layer
+  let step = 0;
+  const timer = setInterval(() => {
+    if (muted || c.state !== 'running') return;
+    if (cfg.mode === 'heart') {
+      [0, 0.24].forEach((d, k) => {
+        tone({ f0: k ? 140 : 170, f1: 50, t0: d, dur: 0.25, vol: 0.7 });
+        tone({ type: 'triangle', f0: k ? 280 : 340, f1: 100, t0: d, dur: 0.2, vol: 0.3 });
+      });
+    } else {
+      const sc = cfg.scale; let idx;
+      if (cfg.mode === 'up') idx = step % sc.length;
+      else if (cfg.mode === 'updown') { const n = sc.length * 2 - 2, k = step % n; idx = k < sc.length ? k : n - k; }
+      else idx = Math.floor(Math.random() * sc.length);
+      const semi = sc[idx] + cfg.oct * 12;
+      tone({ type: cfg.wave, f0: fr(cfg.root, semi), dur: cfg.step / 1000 * 1.6, vol: cfg.vol, lp: cfg.lp * 2 });
+      if (cfg.harm) tone({ type: cfg.wave, f0: fr(cfg.root, semi + cfg.harm), dur: cfg.step / 1000 * 1.6, vol: cfg.vol * 0.7, lp: cfg.lp * 2 });
+    }
+    if (cfg.swoosh && step % 8 === 0) noise({ dur: 2.5, f0: 300, f1: 4000, vol: 0.08 });
+    step++;
+  }, cfg.step);
+
+  track = { out, oscs, timer };
+}
+
+/* ---------- Movement sounds: whoosh + per-card ticks ---------- */
+let lastTick = 0;
+function tick(kind) {
+  if (muted || !actx || actx.state !== 'running') return;
+  const now = performance.now();
+  if (now - lastTick < 35) return;
+  lastTick = now;
+  const cfg = TRACKS[currentShape] || TRACKS.table;
+  const s = cfg.scale[Math.floor(Math.random() * cfg.scale.length)];
+  tone({ type: 'triangle', f0: fr(cfg.root, s + (kind ? 36 : 24)), dur: 0.12, vol: kind ? 0.09 : 0.05 });
+}
+function whoosh(duration) {
+  if (muted) return;
+  noise({ dur: duration / 1000, f0: 200, f1: 3000, vol: 0.18 });
+  tone({ f0: 90, f1: 360, dur: duration / 1000, vol: 0.18, lp: 1200 });
+}
+
+// browsers only allow sound after a user gesture: start the soundtrack on the first touch/click
+addEventListener('pointerdown', () => { if (!muted) { audio(); if (!track) startTrack(currentShape); } });
+document.getElementById('mute').addEventListener('click', e => {
+  muted = !muted;
+  if (master) master.gain.setTargetAtTime(muted ? 0 : 0.9, actx.currentTime, 0.05);
+  if (!muted) { audio(); if (!track) startTrack(currentShape); }
+  e.currentTarget.textContent = muted ? '🔇' : '🔊';
+});
+let currentShape = 'table';
+
+/* ---------- Transitions (Tween.js) ---------- */
+function transform(shapeTargets, duration = 1500) {
+  TWEEN.removeAll();
+  objects.forEach((obj, i) => {
+    const t = shapeTargets[i];
+    const delay = Math.random() * 400;
+    new TWEEN.Tween(obj.position)
+      .to({ x: t.position.x, y: t.position.y, z: t.position.z }, duration)
+      .delay(delay).easing(TWEEN.Easing.Exponential.InOut)
+      .onStart(() => tick(0)).onComplete(() => tick(1)).start();
+    new TWEEN.Tween(obj.rotation)
+      .to({ x: t.rotation.x, y: t.rotation.y, z: t.rotation.z }, duration)
+      .delay(delay).easing(TWEEN.Easing.Exponential.InOut).start();
+  });
+}
+
+document.querySelectorAll('#menu button[data-layout]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#menu button[data-layout]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentShape = btn.dataset.layout;
+    playSound(currentShape);
+    whoosh(1800);
+    startTrack(currentShape);
+    transform(targets[currentShape], 1800);
+    resetView();
+  });
+});
+
+/* ---------- Click card → fly camera in front of it ---------- */
+/* ---------- Search, category filter & info panel ---------- */
+controls.keys = [];   // stop TrackballControls from hijacking A/S/D while typing
+const CATS = { alkali: 'Alkali metal', alkaline: 'Alkaline earth', transition: 'Transition metal', post: 'Post-transition', metalloid: 'Metalloid', nonmetal: 'Nonmetal', halogen: 'Halogen', noble: 'Noble gas', lanth: 'Lanthanide', actin: 'Actinide' };
+const cardInfo = DATA.map(([sym, name, mass, col, row], i) => ({ n: i + 1, sym, name, mass, col, row, cat: category(i + 1, col, row) }));
+const qEl = document.getElementById('search'), countEl = document.getElementById('count');
+const infoEl = document.getElementById('info'), legendEl = document.getElementById('legend');
+let activeCat = null;
+
+function applyFilter() {
+  const s = qEl.value.trim().toLowerCase(), on = !!(s || activeCat);
+  let hits = 0;
+  cardInfo.forEach((d, i) => {
+    const ok = (!activeCat || d.cat === activeCat) &&
+      (!s || d.name.toLowerCase().includes(s) || (KU[d.n - 1] || '').includes(s) || d.sym.toLowerCase().startsWith(s) || String(d.n) === s);
+    const el = objects[i].element;
+    el.classList.toggle('dim', on && !ok);
+    el.classList.toggle('hit', on && ok);
+    if (ok) hits++;
+  });
+  countEl.textContent = on ? hits + (hits === 1 ? ' match' : ' matches') : '';
+  if (on && !muted && actx) tone({ type: 'triangle', f0: 700, f1: 1000 + hits * 4, dur: 0.1, vol: 0.1 });
+}
+
+Object.entries(CATS).forEach(([k, label]) => {
+  const b = document.createElement('button');
+  b.className = 'chip cat-' + k; b.textContent = label;
+  b.addEventListener('click', () => {
+    activeCat = activeCat === k ? null : k;
+    legendEl.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b && activeCat === k));
+    applyFilter();
+  });
+  legendEl.appendChild(b);
+});
+qEl.addEventListener('input', applyFilter);
+
+let infoIndex = 0;
+function showInfo(i) {
+  infoIndex = i;
+  const d = cardInfo[i];
+  const pos = d.row >= 9 ? 'f-block · Period ' + (d.row - 3) : 'Group ' + d.col + ' · Period ' + d.row;
+  infoEl.className = 'cat-' + d.cat;
+  infoEl.style.display = 'flex';
+  document.getElementById('iSym').textContent = d.sym;
+  renderInfo(d);
+  if (!muted && actx) tone({ type: 'triangle', f0: 900, f1: 1400, dur: 0.12, vol: 0.12 });
+}
+document.getElementById('iClose').addEventListener('click', () => { infoEl.style.display = 'none'; });
+
+/* Click vs drag. TrackballControls captures the pointer on the canvas (setPointerCapture), so the browser
+   retargets 'click' away from the cards and per-card click listeners never fired. Instead, one delegated
+   pointerdown/pointerup pair on the renderer element decides: short, small movement = select the card under
+   the cursor; anything else = a drag, left entirely to the controls. */
+let lastTapI = -1, lastTapT = 0, multiTouch = false;
+const downs = new Map();                              // pointerId -> start position/time
+objects.forEach((obj, i) => { obj.element._i = i; });
+function selectCard(i) {
+  const now = performance.now();
+  if (lastTapI === i && now - lastTapT < 350) { focusCard(i); lastTapI = -1; }   // deliberate double-tap / double-click
+  else { showInfo(i); lastTapI = i; lastTapT = now; }
+}
+const surface = renderer.domElement;
+surface.addEventListener('pointerdown', e => {
+  if (downs.size) multiTouch = true;                 // pinch / two-finger gesture: never a selection
+  downs.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() });
+});
+surface.addEventListener('pointerup', e => {
+  const s = downs.get(e.pointerId);
+  downs.delete(e.pointerId);
+  const wasMulti = multiTouch;
+  if (!downs.size) multiTouch = false;
+  if (!s || wasMulti || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  if (Math.hypot(e.clientX - s.x, e.clientY - s.y) > 6 || performance.now() - s.t > 600) return;   // it was a drag or long press
+  const hit = document.elementFromPoint(e.clientX, e.clientY);
+  const card = hit && hit.closest('.element');
+  if (card) selectCard(card._i);
+});
+surface.addEventListener('pointercancel', e => { downs.delete(e.pointerId); if (!downs.size) multiTouch = false; });
+
+/* ---------- Kurdish (Sorani) names + UI text ---------- */
+const KU = 'هایدرۆجین|هێلیۆم|لیسیۆم|بێریلیۆم|بۆرۆن|کاربۆن|نایتڕۆجین|ئۆکسجین|فلۆرین|نیۆن|سۆدیۆم|ماگنیسیۆم|ئەلەمنیۆم|سیلیکۆن|فۆسفۆر|گۆگرد|کلۆرین|ئارگۆن|پۆتاسیۆم|کالسیۆم|سکاندیۆم|تیتانیۆم|ڤانادیۆم|کرۆمیۆم|مەنگەنیز|ئاسن|کۆبالت|نیکڵ|مس|زنک|گالیۆم|جێرمانیۆم|ئارسێنیک|سیلینیۆم|برۆم|کریپتۆن|ڕوبیدیۆم|ستڕۆنشیۆم|ئیتریۆم|زیرکۆنیۆم|نایۆبیۆم|مۆلیبدێنۆم|تێکنیتیۆم|ڕوتینیۆم|ڕۆدیۆم|پالادیۆم|زیو|کادمیۆم|ئیندیۆم|قەڵ|ئەنتیمۆن|تێلۆریۆم|یۆد|زینۆن|سیزیۆم|باریۆم|لانتانۆم|سێریۆم|پراسیۆدیمیۆم|نیۆدیمیۆم|پرۆمیسیۆم|ساماریۆم|یۆڕۆپیۆم|گادۆلینیۆم|تێربیۆم|دیسپرۆسیۆم|هۆلمیۆم|ئێربیۆم|تولیۆم|ئیتەربیۆم|لۆتێتیۆم|هافنیۆم|تانتالیۆم|تەنگستن|ڕێنیۆم|ئۆسمیۆم|ئیریدیۆم|پلاتین|زێڕ|جیوە|تالیۆم|قوڕقوشم|بیسموت|پۆلۆنیۆم|ئەستاتین|ڕادۆن|فرانسیۆم|ڕادیۆم|ئاکتینیۆم|تۆریۆم|پرۆتاکتینیۆم|یۆرانیۆم|نێپتونیۆم|پلوتۆنیۆم|ئەمەریکیۆم|کیۆریۆم|بێرکلیۆم|کالیفۆرنیۆم|ئاینشتاینیۆم|فێرمیۆم|مێندەلیڤیۆم|نۆبلیۆم|لۆرێنسیۆم|ڕەزەرفۆردیۆم|دوبنیۆم|سیبۆرگیۆم|بۆهریۆم|هاسیۆم|مایتنەریۆم|دارمشتادتیۆم|ڕۆنتگێنیۆم|کۆپەرنیکیۆم|نیهۆنیۆم|فلێڕۆڤیۆم|مۆسکۆڤیۆم|لیڤەرمۆریۆم|تێنێسین|ئۆگانێسۆن'.split('|');
+const CATS_EN = Object.assign({}, CATS);
+let lang = 'ku';
+const T = {
+  ku: { shapes: { table: 'خشتە', sphere: 'گۆ', helix: 'هێلیکس', grid: 'تۆڕ', cylinder: 'سیلندەر', torus: 'تۆرەس', wave: 'شەپۆل', dna: 'دی ئێن ئەی', galaxy: 'گەلاکسی', heart: 'دڵ', saturn: 'زوحەل', pyramid: 'هەرەم' },
+    cats: { alkali: 'کانزای ئەلکالی', alkaline: 'ئەلکالینی خاک', transition: 'کانزای گواستراوە', post: 'دوای گواستنەوە', metalloid: 'نیمچەکانزا', nonmetal: 'نەکانزا', halogen: 'هالۆجین', noble: 'گازی نەجیب', lanth: 'لانتانیدەکان', actin: 'ئەکتینیدەکان' },
+    z: 'ژمارەی ئەتۆمی', m: 'بارستایی', p: 'پرۆتۆن', n: 'نیوترۆن ≈', e: 'ئەلیکترۆن', cfg: 'ڕێکخستنی ئەلیکترۆن', st: 'حاڵەت',
+    states: { g: 'گاز', l: 'شلە', s: 'ڕەق' }, ph: 'گەڕان بەدوای توخم...', focus: 'نزیک بکەوە',
+    modes: { cat: 'ڕەنگ: جۆر', mass: 'ڕەنگ: بارستایی', state: 'ڕەنگ: حاڵەت' },
+    hint: 'کارتێک دابگرە بۆ زانیاری · دوگمەی نزیککردنەوە · ⟲ بۆ گەڕانەوە', btn: 'EN' },
+  en: { cats: CATS_EN, z: 'Atomic number', m: 'Mass', p: 'Protons', n: 'Neutrons ≈', e: 'Electrons', cfg: 'Configuration', st: 'State',
+    states: { g: 'Gas', l: 'Liquid', s: 'Solid' }, ph: 'Search element, symbol or number…', focus: 'Focus',
+    modes: { cat: 'Color: Category', mass: 'Color: Mass', state: 'Color: State' },
+    hint: 'Tap a card for info · Tap Focus (or double-tap) to zoom in · ⟲ resets the view', btn: 'کوردی' }
+};
+const nm = d => lang === 'ku' ? KU[d.n - 1] : d.name;
+const cn = k => T[lang].cats[k];
+
+/* ---------- Element facts: config, state ---------- */
+const ORB = [['1s', 2], ['2s', 2], ['2p', 6], ['3s', 2], ['3p', 6], ['4s', 2], ['3d', 10], ['4p', 6], ['5s', 2], ['4d', 10], ['5p', 6], ['6s', 2], ['4f', 14], ['5d', 10], ['6p', 6], ['7s', 2], ['5f', 14], ['6d', 10], ['7p', 6]];
+function econfig(Z) { let r = Z; const out = []; for (const [l, c] of ORB) { if (r <= 0) break; const f = Math.min(c, r); out.push([l, f]); r -= f; } return out; }
+const sup = n => String(n).replace(/\d/g, c => '⁰¹²³⁴⁵⁶⁷⁸⁹'[c]);
+const ST = n => [1, 2, 7, 8, 9, 10, 17, 18, 36, 54, 86, 118].includes(n) ? 'g' : (n === 35 || n === 80) ? 'l' : 's';
+
+function renderInfo(d) {
+  const k = lang === 'ku', t = T[lang], Z = d.n, Nn = Math.round(d.mass) - Z;
+  const el = document.getElementById('iTxt');
+  el.style.direction = k ? 'rtl' : 'ltr'; el.style.textAlign = k ? 'right' : 'left';
+  el.innerHTML = `<b>${nm(d)}</b>${k ? ' · ' + d.name : ''}<br>${t.z}: ${Z} · ${t.m}: ${d.mass}<br>${cn(d.cat)} · ${t.st}: ${t.states[ST(Z)]}<br>` +
+    `<span class="dot" style="background:#ff5a5a"></span>${t.p} ${Z} <span class="dot" style="background:#5aa0ff"></span>${t.n} ${Nn} <span class="dot" style="background:#5ff"></span>${t.e} ${Z}<br>` +
+    `${t.cfg}: <span dir="ltr">${econfig(Z).map(([l, c]) => l + sup(c)).join(' ')}</span>`;
+  atomD = d; cancelAnimationFrame(atomRAF); drawAtom(0);
+}
+
+/* ---------- Atom viewer: nucleus (protons/neutrons) + tilted electron shells ---------- */
+let atomRAF = 0, atomD = null;
+function drawAtom(ts) {
+  const d = atomD;
+  if (!d || infoEl.style.display === 'none') return;
+  const g = document.getElementById('atom').getContext('2d');
+  g.clearRect(0, 0, 240, 240); g.save(); g.translate(120, 120);
+  const sh = [];
+  econfig(d.n).forEach(([l, c]) => { const n = +l[0]; sh[n - 1] = (sh[n - 1] || 0) + c; });
+  sh.forEach((cnt, k) => {
+    const r = 30 + k * (70 / sh.length), ry = r * (0.5 + 0.12 * (k % 3));
+    g.save(); g.rotate(k * 0.8); g.strokeStyle = 'rgba(100,255,220,.3)';
+    g.beginPath(); g.ellipse(0, 0, r, ry, 0, 0, 7); g.stroke();
+    g.fillStyle = '#5ff';
+    for (let e = 0; e < cnt; e++) { const a = ts / (900 + k * 500) + e * 6.283 / cnt; g.beginPath(); g.arc(r * Math.cos(a), ry * Math.sin(a), 3.2, 0, 7); g.fill(); }
+    g.restore();
+  });
+  const A = Math.round(d.mass), nr = Math.min(24, 4 + Math.cbrt(A) * 3.2);
+  for (let i = 0; i < A; i++) {
+    const u = (i + .5) / A, rr = nr * Math.cbrt(u), th = i * 2.399963, ph = Math.acos(1 - 2 * u);
+    g.fillStyle = Math.floor((i + 1) * d.n / A) > Math.floor(i * d.n / A) ? '#ff5a5a' : '#5aa0ff';
+    g.beginPath(); g.arc(rr * Math.sin(ph) * Math.cos(th), rr * Math.sin(ph) * Math.sin(th), 2.3, 0, 7); g.fill();
+  }
+  g.restore();
+  atomRAF = requestAnimationFrame(drawAtom);
+}
+
+/* ---------- Property color modes + legend ---------- */
+const hsl2rgb = (h, s, l) => { const a = s * Math.min(l, 1 - l), f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); }; return [f(0), f(8), f(4)].map(v => Math.round(v * 255)).join(','); };
+function applyColor(mode) {
+  const g = document.getElementById('grad'), t = T[lang];
+  cardInfo.forEach((d, i) => {
+    const el = objects[i].element;
+    const c = mode === 'mass' ? hsl2rgb(240 - 240 * Math.min(d.mass / 294, 1), 1, .6) : mode === 'state' ? { g: '80,220,255', l: '255,160,70', s: '190,190,215' }[ST(d.n)] : null;
+    if (c) el.style.setProperty('--c', c); else el.style.removeProperty('--c');
+  });
+  g.style.display = mode === 'cat' ? 'none' : 'flex';
+  if (mode === 'mass') { g.style.background = 'linear-gradient(90deg,' + [0, .25, .5, .75, 1].map(u => 'rgb(' + hsl2rgb(240 - 240 * u, 1, .6) + ')').join(',') + ')'; g.innerHTML = '<span>1</span><span>294</span>'; }
+  else if (mode === 'state') { g.style.background = 'linear-gradient(90deg,rgb(80,220,255) 33%,rgb(255,160,70) 33% 66%,rgb(190,190,215) 66%)'; g.innerHTML = `<span>${t.states.g}</span><span>${t.states.l}</span><span>${t.states.s}</span>`; }
+}
+
+function applyLang() {
+  const t = T[lang], k = lang === 'ku';
+  document.querySelectorAll('#menu button[data-layout]').forEach(b => { b.dataset.en = b.dataset.en || b.textContent; b.textContent = k ? t.shapes[b.dataset.layout] : b.dataset.en; });
+  [...legendEl.children].forEach((b, i) => { b.textContent = Object.values(t.cats)[i]; });
+  objects.forEach((o, i) => { o.element.querySelector('b').textContent = nm(cardInfo[i]); });
+  qEl.placeholder = t.ph;
+  document.getElementById('lang').textContent = t.btn;
+  document.getElementById('hint').textContent = t.hint;
+  document.getElementById('iFocus').textContent = t.focus;
+  const sel = document.getElementById('colorBy'), cur = sel.value || 'cat';
+  sel.innerHTML = Object.entries(t.modes).map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+  sel.value = cur; applyColor(cur);
+  if (infoEl.style.display !== 'none') renderInfo(cardInfo[infoIndex]);
+  if (typeof chemLang === 'function') chemLang();
+}
+document.getElementById('lang').addEventListener('click', () => { lang = lang === 'ku' ? 'en' : 'ku'; applyLang(); });
+document.getElementById('colorBy').addEventListener('change', e => applyColor(e.target.value));
+
+/* ---------- Presentation mode + shortcuts ---------- */
+let presTimer = 0;
+function setPres(on) {
+  document.body.classList.toggle('pres', on); clearInterval(presTimer);
+  if (!on) return;
+  const btns = [...document.querySelectorAll('#menu button[data-layout]')];
+  let i = btns.findIndex(b => b.classList.contains('active'));
+  resetView(); autoSpin = true;
+  presTimer = setInterval(() => btns[++i % btns.length].click(), 7000);
+}
+document.getElementById('pres').addEventListener('click', () => setPres(true));
+document.getElementById('exitPres').addEventListener('click', () => setPres(false));
+addEventListener('keydown', e => {
+  if (document.body.dataset.tab !== 'table') return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') { if (e.key === 'Escape') e.target.blur(); return; }
+  if (e.key === '/') { e.preventDefault(); qEl.focus(); }
+  else if (e.key === 'p') setPres(!document.body.classList.contains('pres'));
+  else if (e.key === 'l') document.getElementById('lang').click();
+  else if (e.key === 'Escape') { setPres(false); resetView(); }
+});
+applyLang();
+
+/* ---------- Camera focus / reset (moves the orbit target too) ---------- */
+let focused = false;
+function flyTo(pos, target, ms) {
+  new TWEEN.Tween(camera.position).to({ x: pos.x, y: pos.y, z: pos.z }, ms).easing(TWEEN.Easing.Quadratic.InOut).start();
+  new TWEEN.Tween(controls.target).to({ x: target.x, y: target.y, z: target.z }, ms).easing(TWEEN.Easing.Quadratic.InOut).start();
+}
+function focusCard(i) {
+  const obj = objects[i];
+  scene.updateMatrixWorld(true);                       // account for the idle spin
+  const wp = obj.getWorldPosition(new THREE.Vector3());
+  const normal = obj.getWorldDirection(new THREE.Vector3());   // the card's front, in world space
+  focused = true;                                      // pause idle rotation so the card stays put
+  flyTo(wp.clone().addScaledVector(normal, 560), wp, 1000);
+}
+function resetView() {
+  focused = false;
+  camera.up.set(0, 1, 0);
+  flyTo(new THREE.Vector3(0, 0, 3000), new THREE.Vector3(0, 0, 0), 1000);
+}
+document.getElementById('iFocus').addEventListener('click', () => focusCard(infoIndex));
+document.getElementById('reset').addEventListener('click', resetView);
+
+/* ---------- Loop & resize ---------- */
+function render() { renderer.render(scene, camera); }
+/* Render only when something changed (tweens, camera, spin) instead of 60x/second */
+let autoSpin = false, dirty = true;
+controls.addEventListener('change', () => { dirty = true; });
+document.getElementById('spin').addEventListener('click', e => { autoSpin = !autoSpin; e.currentTarget.classList.toggle('active', autoSpin); });
+function animate(time) {
+  requestAnimationFrame(animate);
+  const moving = TWEEN.getAll().length > 0;
+  TWEEN.update(time);
+  const turn = Math.PI * 2, rest = Math.round(scene.rotation.y / turn) * turn;
+  if (!focused && autoSpin && currentShape !== 'table') { scene.rotation.y += 0.0012; dirty = true; }
+  else if (!focused && currentShape === 'table' && Math.abs(rest - scene.rotation.y) > 0.0005) { scene.rotation.y += (rest - scene.rotation.y) * 0.05; dirty = true; }
+  controls.update();
+  if (moving || dirty) { render(); dirty = false; }
+}
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  controls.handleResize();   // keep the trackball's screen size in sync, or drag math goes wrong after a resize
+  render();
+});
+
+transform(targets.table, 2000);
+animate();
+
+</script>
+<script>
+(function () {
+
+const STR = {
+ en: { tabs: { table: 'Periodic Table 3D', ions: 'Ions', ab: 'Acids & Bases', sol: 'Solubility', lab: 'Reaction Lab' },
+  cat: 'Cation (+)', an: 'Anion (−)', tilt: 'Hover / touch a card to tilt it · English + Kurdish', cations: 'Cations', anions: 'Anions', cation: 'cation', anion: 'anion',
+  acids: 'Acids', bases: 'Bases', strong: 'strong', weak: 'weak', nameT: 'Naming rules', bin: 'Binary acid', oxy: 'Oxyacid',
+  binR: 'hydro + stem + -ic acid → HCl = hydrochloric acid', oxyR: 'anion -ate → -ic acid (H₂SO₄ sulfuric); anion -ite → -ous acid (H₂SO₃ sulfurous)',
+  chk: 'Solubility checker', sol: 'soluble (aq)', ppt: 'precipitate (s)', rulesT: 'Solubility rules', lab: 'Reaction lab',
+  inst: 'Tap two compounds: first = A, second = B, then press Mix.', mix: 'Mix A + B', same: 'Same ion on both sides — nothing new can form.',
+  net: 'Net ionic:', nor: 'No reaction — all ions stay aqueous (aq).', spec: 'Spectator ions', none: 'none', insolR: 'One chosen compound is insoluble, so it is not an aqueous solution and cannot react as written.', pick: 'Pick two compounds first.', pptL: 'precipitate', choose: 'Choose two compounds and press Mix',
+  r: { g1: 'Group 1 and ammonium (NH₄⁺) salts are always soluble', nit: 'Nitrates, chlorates and acetates are soluble', hal_ok: 'Halides are soluble (exceptions: Ag⁺, Pb²⁺)', hal_no: 'Halides are soluble EXCEPT with Ag⁺ and Pb²⁺',
+   so4_ok: 'Sulfates are soluble (exceptions: Ca²⁺, Sr²⁺, Ba²⁺, Pb²⁺, Ag⁺)', so4_no: 'Sulfates are soluble EXCEPT with Ca²⁺, Sr²⁺, Ba²⁺, Pb²⁺, Ag⁺', oh_ok: 'Hydroxides of Ba²⁺ and Sr²⁺ are soluble',
+   oh_ca: 'Ca(OH)₂ is only slightly soluble → treated as a precipitate', oh_no: 'Hydroxides are insoluble except Group 1, NH₄⁺, Ba²⁺, Sr²⁺', s_ok: 'Group 2 sulfides are soluble', s_no: 'Sulfides are insoluble except Group 1, Group 2 and NH₄⁺',
+   f_ok: 'Most other fluorides are soluble', f_no: 'Fluorides are insoluble with Group 2 and Pb²⁺', other: 'Carbonates, phosphates, sulfites, chromates and oxides are insoluble except with Group 1 / NH₄⁺' } },
+ ku: { tabs: { table: 'خشتەی خولی 3D', ions: 'ئایۆنەکان', ab: 'ترش و تفت', sol: 'توانەوە', lab: 'تاقیگە' },
+  cat: 'کاتیۆن (+)', an: 'ئانیۆن (−)', tilt: 'کارتێک بجوڵێنە بۆ لارکردنەوەی · کوردی + English', cations: 'کاتیۆنەکان', anions: 'ئانیۆنەکان', cation: 'کاتیۆن', anion: 'ئانیۆن',
+  acids: 'ترشەکان', bases: 'تفتەکان', strong: 'بەهێز', weak: 'لاواز', nameT: 'یاساکانی ناونان', bin: 'ترشی دووانی', oxy: 'ترشی ئۆکسجینی',
+  binR: 'هایدرۆ + ڕەگ + ـیک (ic) ← HCl = ترشی هایدرۆکلۆریک', oxyR: 'ئانیۆنی -ate ← ترشی -ic (H₂SO₄ سەلفیوریک)؛ ئانیۆنی -ite ← ترشی -ous (H₂SO₃ سەلفەرۆس)',
+  chk: 'پشکنەری توانەوە', sol: 'دەتوێتەوە (aq)', ppt: 'نیشتوو (s)', rulesT: 'یاساکانی توانەوە', lab: 'تاقیگەی کارلێک',
+  inst: 'دوو کۆمپاوند دابگرە: یەکەم = A، دووەم = B، پاشان تێکەڵ بکە.', mix: 'تێکەڵ بکە A + B', same: 'هەمان ئایۆن لە هەردوو لا هەیە — هیچ شتێکی نوێ دروست نابێت.',
+  net: 'هاوکێشەی ئایۆنی پوخت:', nor: 'کارلێک نییە — هەموو ئایۆنەکان دەتوێنەوە (aq).', spec: 'ئایۆنە بینەرەکان', none: 'هیچ', insolR: 'یەکێک لە کۆمپاوندەکان ناتوێتەوە، بۆیە وەک گیراوە (aq) کارلێک ناکات.', pick: 'سەرەتا دوو کۆمپاوند هەڵبژێرە.', pptL: 'نیشتوو', choose: 'دوو کۆمپاوند هەڵبژێرە و تێکەڵ بکە دابگرە',
+  r: { g1: 'خوێی گرووپی ١ و ئەمۆنیۆم (NH₄⁺) هەمیشە دەتوێنەوە', nit: 'نایترات و کلۆرات و ئەسیتات دەتوێنەوە', hal_ok: 'هالیدەکان دەتوێنەوە (جگە لە Ag⁺ و Pb²⁺)', hal_no: 'هالیدەکان دەتوێنەوە جگە لەگەڵ Ag⁺ و Pb²⁺',
+   so4_ok: 'سەلفاتەکان دەتوێنەوە (جگە لە Ca²⁺، Sr²⁺، Ba²⁺، Pb²⁺، Ag⁺)', so4_no: 'سەلفاتەکان دەتوێنەوە جگە لەگەڵ Ca²⁺، Sr²⁺، Ba²⁺، Pb²⁺، Ag⁺', oh_ok: 'هایدرۆکسیدی Ba²⁺ و Sr²⁺ دەتوێتەوە',
+   oh_ca: 'Ca(OH)₂ کەم دەتوێتەوە ← وەک نیشتوو هەژمار دەکرێت', oh_no: 'هایدرۆکسیدەکان ناتوێنەوە جگە لە گرووپی ١ و NH₄⁺ و Ba²⁺ و Sr²⁺', s_ok: 'سەلفایدی گرووپی ٢ دەتوێتەوە', s_no: 'سەلفایدەکان ناتوێنەوە جگە لە گرووپی ١ و ٢ و NH₄⁺',
+   f_ok: 'زۆربەی فلۆریدەکانی تر دەتوێنەوە', f_no: 'فلۆرید لەگەڵ گرووپی ٢ و Pb²⁺ ناتوێتەوە', other: 'کاربۆنات و فۆسفات و سەلفیت و کرۆمات و ئۆکسید ناتوێنەوە جگە لە گرووپی ١ / NH₄⁺' } }
+};
+const S = () => STR[lang];
+const sub = s => String(s).replace(/\d/g, d => '₀₁₂₃₄₅₆₇₈₉'[d]);
+const sup = (z, p) => (z > 1 ? '⁰¹²³⁴⁵⁶⁷⁸⁹'[z] : '') + (p ? '⁺' : '⁻');
+// [symbol, charge, English, Kurdish, polyatomic]
+const CAT = [['Li',1,'Lithium','لیسیۆم'],['Na',1,'Sodium','سۆدیۆم'],['K',1,'Potassium','پۆتاسیۆم'],['NH₄',1,'Ammonium','ئەمۆنیۆم',1],['Ag',1,'Silver','زیو'],
+ ['Mg',2,'Magnesium','ماگنیسیۆم'],['Ca',2,'Calcium','کالسیۆم'],['Sr',2,'Strontium','ستڕۆنشیۆم'],['Ba',2,'Barium','باریۆم'],['Zn',2,'Zinc','زنک'],['Cu',2,'Copper(II)','مس'],['Fe',2,'Iron(II)','ئاسن (II)'],['Pb',2,'Lead(II)','قوڕقوشم'],
+ ['Fe',3,'Iron(III)','ئاسن (III)'],['Al',3,'Aluminium','ئەلەمنیۆم']].map(a => ({ s: a[0], z: a[1], en: a[2], ku: a[3], poly: a[4], cat: 1, id: a[0] + a[1] }));
+const AN = [['F',1,'Fluoride','فلۆرید'],['Cl',1,'Chloride','کلۆرید'],['Br',1,'Bromide','برۆمید'],['I',1,'Iodide','یۆدید'],['OH',1,'Hydroxide','هایدرۆکسید',1],['NO₃',1,'Nitrate','نایترات',1],['CH₃COO',1,'Acetate','ئەسیتات',1],['ClO₃',1,'Chlorate','کلۆرات',1],
+ ['O',2,'Oxide','ئۆکسید'],['S',2,'Sulfide','سەلفاید'],['SO₄',2,'Sulfate','گۆگردات',1],['SO₃',2,'Sulfite','سەلفیت',1],['CO₃',2,'Carbonate','کاربۆنات',1],['CrO₄',2,'Chromate','کرۆمات',1],['PO₄',3,'Phosphate','فۆسفات',1]]
+ .map(a => ({ s: a[0], z: a[1], en: a[2], ku: a[3], poly: a[4], cat: 0, id: a[0] + a[1] }));
+const IONS = {}; [...CAT, ...AN].forEach(i => IONS[i.id] = i);
+const gcd = (a, b) => b ? gcd(b, a % b) : a;
+const cnt = (c, a) => { const g = gcd(c.z, a.z); return [a.z / g, c.z / g]; };           // [cations, anions]
+const part = (i, n) => (i.poly && n > 1 ? '(' + i.s + ')' : i.s) + (n > 1 ? sub(n) : '');
+const fm = (c, a) => { const [x, y] = cnt(c, a); return part(c, x) + part(a, y); };
+const ion = i => i.s + sup(i.z, i.cat);
+
+
+function sol(c, a) {
+  const A = a.s, C = c.s;
+  if (['Li','Na','K','NH₄'].includes(C)) return [1, 'g1'];
+  if (['NO₃','ClO₃','CH₃COO'].includes(A)) return [1, 'nit'];
+  if (['Cl','Br','I'].includes(A)) return ['Ag','Pb'].includes(C) ? [0, 'hal_no'] : [1, 'hal_ok'];
+  if (A === 'SO₄') return ['Ca','Sr','Ba','Pb','Ag'].includes(C) ? [0, 'so4_no'] : [1, 'so4_ok'];
+  if (A === 'OH') return ['Sr','Ba'].includes(C) ? [1, 'oh_ok'] : [0, C === 'Ca' ? 'oh_ca' : 'oh_no'];
+  if (A === 'S') return ['Mg','Ca','Sr','Ba'].includes(C) ? [1, 's_ok'] : [0, 's_no'];
+  if (A === 'F') return ['Mg','Ca','Sr','Ba','Pb'].includes(C) ? [0, 'f_no'] : [1, 'f_ok'];
+  return [0, 'other'];
+}
+const $ = id => document.getElementById(id);
+const ACIDS = [   // [formula, English, Kurdish, strong?]
+ ['HNO₃','Nitric acid','ترشی نایتریك',1],['HI','Hydroiodic acid','ترشی هایدرۆ یۆدیك',1],['HBr','Hydrobromic acid','ترشی هایدرۆ برۆمیك',1],['HCl','Hydrochloric acid','ترشی هایدرۆ كڵۆریك',1],
+ ['H₂SO₄','Sulfuric acid','ترشی گوگردیك',1],['HClO₃','Chloric acid','ترشی كڵۆریك',1],['HClO₄','Perchloric acid','ترشی پڕ كڵۆریك',1],['H₂CrO₄','Chromic acid','ترشی كرۆمیك',1],
+ ['HF','Hydrofluoric acid','ترشی هایدرۆ فلۆریك',0],['HCN','Hydrocyanic acid','ترشی هایدرۆ سیانیك',0],['H₂S','Hydrosulfuric acid','ترشی هایدرۆ گوگردیك',0],['CH₃COOH','Acetic acid','ترشی سركەیك',0],
+ ['H₃PO₄','Phosphoric acid','ترشی فۆسفۆریك',0],['H₃PO₃','Phosphorous acid','ترشی فۆسفۆڕۆز',0],['H₂CO₃','Carbonic acid','ترشی كاریۆنیك',0],['HNO₂','Nitrous acid','ترشی نایترۆز',0],
+ ['HClO','Hypochlorous acid','ترشی هایپۆكڵۆڕۆز',0],['HClO₂','Chlorous acid','ترشی كڵۆڕۆز',0],['H₂SO₃','Sulfurous acid','ترشی گوگردۆز',0]];
+const BASES = [
+ ['NaOH','Sodium hydroxide','هایدرۆكسیدی سۆدیۆم',1],['KOH','Potassium hydroxide','هایدرۆكسیدی پۆتاسیۆم',1],['LiOH','Lithium hydroxide','هایدرۆكسیدی لیسیۆم',1],['RbOH','Rubidium hydroxide','هایدرۆكسیدی ڕوبیدیۆم',1],
+ ['CsOH','Cesium hydroxide','هایدرۆكسیدی سیزێۆم',1],['Ca(OH)₂','Calcium hydroxide','هایدرۆكسیدی كالسیۆم',1],['Sr(OH)₂','Strontium hydroxide','هایدرۆكسیدی ستڕۆنشیۆم',1],['Ba(OH)₂','Barium hydroxide','هایدرۆكسیدی باریۆم',1],
+ ['NH₃','Ammonia','ئامۆنیا',0],['C₆H₅NH₂','Aniline','ئەنیلین',0],['CH₃NH₂','Methylamine','مەثیل ئەمین',0]];
+const TAG = { A: ['Weak Acid / ترشی لاواز', 'Strong Acid / ترشی بەهێز'], B: ['Weak Base / تفتی لاواز', 'Strong Base / تفتی بەهێز'] };
+const card = (sym, top, bot, cls, tag) => `<div class="card"><div class="sym fm">${sym}</div><div class="nm">${top}</div><div class="ku">${bot || ''}</div><span class="tag ${cls}">${tag}</span></div>`;
+
+function check() {
+  const c = CAT[sc.value || 0], a = AN[sa.value || 0], [ok, k] = sol(c, a), s = S();
+  $('sf').textContent = fm(c, a);
+  $('sr').innerHTML = ok ? `<span class="tag sol">${s.sol}</span>` : `<span class="tag ppt">${s.ppt}</span>`;
+  $('sw').textContent = s.r[k];
+}
+function render() {
+  const s = S(), ku = lang === 'ku', keep = [sc.value, sa.value];
+  $('chem').dir = ku ? 'rtl' : 'ltr';
+  document.querySelectorAll('#tabs button').forEach(b => b.textContent = s.tabs[b.dataset.t]);
+  $('ionsHead').innerHTML = `<span class="tag cat">${s.cat}</span><span class="tag an">${s.an}</span><span class="mut">${s.tilt}</span>`;
+  $('hCat').textContent = s.cations; $('hAn').textContent = s.anions; $('hAcid').textContent = s.acids; $('hBase').textContent = s.bases;
+  const ic = (i, cls, t) => card(ion(i), ku ? i.ku : i.en, ku ? i.en : i.ku, cls, t);
+  $('gCat').innerHTML = CAT.map(i => ic(i, 'cat', s.cation)).join(''); $('gAn').innerHTML = AN.map(i => ic(i, 'an', s.anion)).join('');
+  const ab = k => x => card(x[0], ku ? x[2] : x[1], ku ? x[1] : x[2], k === 'A' ? (x[3] ? 'sa' : 'wa') : (x[3] ? 'sb' : 'wb'), TAG[k][x[3]]);
+  $('gAcid').innerHTML = ACIDS.map(ab('A')).join(''); $('gBase').innerHTML = BASES.map(ab('B')).join('');
+  $('naming').innerHTML = `<b>${s.nameT}</b><p><span class="tag sa">${s.bin}</span> ${s.binR}</p><p><span class="tag wa">${s.oxy}</span> ${s.oxyR}</p>`;
+  const opt = (a) => a.map((i, k) => `<option value="${k}">${ion(i)} — ${ku ? i.ku : i.en}</option>`).join('');
+  sc.innerHTML = opt(CAT); sa.innerHTML = opt(AN);
+  if (keep[0]) { sc.value = keep[0]; sa.value = keep[1]; }
+  $('hChk').textContent = s.chk;
+  $('rules').innerHTML = `<b>${s.rulesT}</b><ul>${['g1','nit','hal_no','so4_no','oh_no','s_no','f_no','other'].map(k => `<li>${s.r[k]}</li>`).join('')}</ul>`;
+  $('hLab').textContent = s.lab; $('inst').textContent = s.inst; $('mix').textContent = s.mix;
+  check();
+}
+sc.onchange = sa.onchange = check;
+const tilt = e => { const c = e.target.closest('.card'); if (!c) return; const r = c.getBoundingClientRect(); c.style.setProperty('--ry', ((e.clientX - r.left) / r.width - .5) * 30 + 'deg'); c.style.setProperty('--rx', (.5 - (e.clientY - r.top) / r.height) * 30 + 'deg'); };
+const flat = e => { const c = e.target.closest('.card'); if (c) { c.style.setProperty('--rx', '0deg'); c.style.setProperty('--ry', '0deg'); } };
+document.querySelectorAll('#chem .grid').forEach(g => { g.addEventListener('pointermove', tilt); g.addEventListener('pointerdown', tilt); ['pointerout', 'pointerup', 'pointercancel'].forEach(v => g.addEventListener(v, flat)); });
+/* ---------- Reaction lab ---------- */
+const COMP = [['K1','SO₄2'],['Mg2','NO₃1'],['Na1','Cl1'],['Ag1','NO₃1'],['Ba2','Cl1'],['Na1','SO₄2'],['Pb2','NO₃1'],['K1','I1'],['Cu2','SO₄2'],['Na1','OH1'],['Na1','CO₃2'],['Ca2','Cl1'],['Fe3','Cl1'],['Na1','PO₄3'],['K1','CrO₄2'],['NH₄1','S2']]
+  .map(([c, a]) => ({ c: IONS[c], a: IONS[a] })).filter(x => x.c && x.a);
+const cchipsEl = document.getElementById('cchips');
+COMP.forEach((x, i) => { const b = document.createElement('button'); b.className = 'cchip'; b.dataset.i = i; b.textContent = fm(x.c, x.a); cchipsEl.appendChild(b); });
+let selA = null, selB = null;
+cchipsEl.onclick = e => {
+  const i = e.target.dataset.i; if (i == null) return;
+  if (selA === null || (selA !== null && selB !== null)) { selA = +i; selB = null; } else selB = +i;
+  cchipsEl.querySelectorAll('.cchip').forEach(c => c.className = 'cchip' + (+c.dataset.i === selA ? ' A' : +c.dataset.i === selB ? ' B' : ''));
+  pick.textContent = (selA !== null ? 'A = ' + fm(COMP[selA].c, COMP[selA].a) : '') + (selB !== null ? '   B = ' + fm(COMP[selB].c, COMP[selB].a) : '');
+};
+function react(A, B) {
+  const c1 = A.c, a1 = A.a, c2 = B.c, a2 = B.a;
+  const P1 = { c: c1, a: a2 }, P2 = { c: c2, a: a1 };
+  const same = c1.id === c2.id || a1.id === a2.id;
+  const [x1, y1] = cnt(c1, a1), [x2, y2] = cnt(c2, a2), [p1x, p1y] = cnt(c1, a2), [p2x, p2y] = cnt(c2, a1);
+  let co = [1, 1, 1, 1];
+  search: for (let s = 4; s <= 24; s++) for (let a = 1; a <= 8; a++) for (let b = 1; b <= 8; b++) for (let c = 1; c <= 8; c++) for (let d = 1; d <= 8; d++) {
+    if (a + b + c + d !== s) continue;
+    if (a * x1 === c * p1x && a * y1 === d * p2y && b * x2 === d * p2x && b * y2 === c * p1y) { co = [a, b, c, d]; break search; }
+  }
+  const s1 = !same && !sol(P1.c, P1.a)[0], s2 = !same && !sol(P2.c, P2.a)[0];
+  return { A, B, P1, P2, co, same, ppt: [s1, s2], x: [[p1x, p1y], [p2x, p2y]], badReactant: !sol(c1, a1)[0] || !sol(c2, a2)[0] };
+}
+const cf = n => n > 1 ? n : '';
+function netIonic(r) {   // species-level: expand every compound into ions, cancel spectators, reduce coefficients
+  const [a, b, c, d] = r.co, L = {}, R = {}, solids = [];
+  const add = (o, i, n) => { o[i.id] = (o[i.id] || 0) + n; };
+  const [x1, y1] = cnt(r.A.c, r.A.a), [x2, y2] = cnt(r.B.c, r.B.a);
+  add(L, r.A.c, a * x1); add(L, r.A.a, a * y1); add(L, r.B.c, b * x2); add(L, r.B.a, b * y2);
+  [[r.P1, c, 0], [r.P2, d, 1]].forEach(([p, n, k]) => {
+    const [x, y] = r.x[k];
+    if (r.ppt[k]) solids.push([fm(p.c, p.a) + '(s)', n]); else { add(R, p.c, n * x); add(R, p.a, n * y); }
+  });
+  Object.keys(L).forEach(id => { const m = Math.min(L[id], R[id] || 0); L[id] -= m; if (R[id]) R[id] -= m; });
+  const left = Object.entries(L).filter(([, n]) => n > 0).map(([id, n]) => [ion(IONS[id]) + '(aq)', n]);
+  const g = [...left, ...solids].reduce((m, [, n]) => gcd(m, n), 0) || 1;
+  const t = ([sp, n]) => (n / g > 1 ? n / g : '') + sp;
+  return left.map(t).join(' + ') + ' → ' + solids.map(t).join(' + ');
+}
+function showText(r) {
+  if (r.badReactant) { eq.textContent = S().insolR; net.textContent = ''; spec.textContent = ''; return; }
+  const f = (p, ppt) => fm(p.c, p.a) + (ppt ? '(s)' : '(aq)');
+  const [a, b, c, d] = r.co;
+  eq.innerHTML = r.same ? S().same :
+    `${cf(a)}${fm(r.A.c, r.A.a)}(aq) + ${cf(b)}${fm(r.B.c, r.B.a)}(aq) → ${cf(c)}${f(r.P1, r.ppt[0])} + ${cf(d)}${f(r.P2, r.ppt[1])}`;
+  const nets = [];
+  if (r.ppt[0] || r.ppt[1]) nets.push(netIonic(r));
+  net.innerHTML = nets.length ? '<b style="color:var(--or)">' + S().net + '</b> ' + nets.join(' ; ') : '<b style="color:var(--gr)">' + S().nor + '</b>';
+  const used = new Set(); if (r.ppt[0]) { used.add(r.P1.c.id); used.add(r.P1.a.id); } if (r.ppt[1]) { used.add(r.P2.c.id); used.add(r.P2.a.id); }
+  const sp = [r.A.c, r.A.a, r.B.c, r.B.a].filter(i => !used.has(i.id)).map(ion);
+  spec.textContent = S().spec + ': ' + (sp.length ? [...new Set(sp)].join(', ') : S().none);
+}
+
+/* ---------- Canvas: pseudo-3D ion simulation ---------- */
+const cv = document.getElementById('cv'), g2 = cv.getContext('2d');
+let W = 600, H = 380, DPR = 1, parts = [], t0 = 0, res = null, crystals = [], running = false;
+function sizeCv() { DPR = devicePixelRatio || 1; W = cv.clientWidth; H = cv.clientHeight; cv.width = W * DPR; cv.height = H * DPR; g2.setTransform(DPR, 0, 0, DPR, 0, 0); draw(0); }
+addEventListener('resize', () => document.getElementById('lab').classList.contains('on') && sizeCv());
+const rnd = (a, b) => a + Math.random() * (b - a);
+function spawn(side, c, a, tagC, tagA, u) {
+  const [x, y] = cnt(c, a), cx = side < 0 ? W * .2 : W * .8, out = [];
+  const add = (i, tag, n) => { for (let k = 0; k < n * u; k++) out.push({ i, tag, x: cx + rnd(-45, 45), y: H * .4 + rnd(-45, 45), z: rnd(-70, 70), sx: 0, sy: 0, r: i.cat ? 15 : 20, vx: 0, vy: 0, vz: 0, cr: -1, slot: 0 }); };
+  add(c, tagC, x); add(a, tagA, y); out.forEach(p => { p.sx = p.x; p.sy = p.y; }); return out;
+}
+function startMix() {
+  if (selA === null || selB === null) { pick.textContent = S().pick; return; }
+  res = react(COMP[selA], COMP[selB]); showText(res); if (res.badReactant) return;
+  parts = [...spawn(-1, res.A.c, res.A.a, 'c1', 'a1', res.co[0]), ...spawn(1, res.B.c, res.B.a, 'c2', 'a2', res.co[1])];
+  // crystal 0 = c1 + a2 ; crystal 1 = c2 + a1
+  crystals = [];
+  [[0, 'c1', 'a2'], [1, 'c2', 'a1']].forEach(([k, t1, t2]) => {
+    if (!res.ppt[k]) return;
+    const idx = crystals.length, cr = { cx: 0, cy: H * .42, n: 0 };
+    const m1 = parts.filter(p => p.tag === t1), m2 = parts.filter(p => p.tag === t2);   // exact ion counts from the balanced equation
+    for (let i = 0; i < Math.max(m1.length, m2.length); i++) [m1[i], m2[i]].forEach(p => { if (p) { p.cr = idx; p.slot = cr.n++; } });
+    crystals.push(cr);
+  });
+  crystals.forEach((c, i) => c.cx = W * (crystals.length === 1 ? .5 : .38 + i * .24));
+  if (!muted) { tone({ f0: 180, f1: 700, dur: 1.4, vol: .25 }); tone({ type: 'triangle', f0: 900, f1: 200, t0: 1.5, dur: .5, vol: .25 }); }
+  t0 = performance.now(); if (!running) { running = true; requestAnimationFrame(loop); }
+}
+mix.onclick = startMix;
+const ease = x => x < 0 ? 0 : x > 1 ? 1 : x * x * (3 - 2 * x);
+function step(t) {
+  const approach = ease(t / 1.5);
+  parts.forEach((p, n) => {
+    if (t < 1.6) {                                    // fly towards the centre
+      const side = p.sx < W / 2 ? -1 : 1, tx = W / 2 + side * 45 + Math.sin(n) * 20;
+      p.x = p.sx + (tx - p.sx) * approach; p.y = p.sy + (H * .42 - p.sy) * approach + Math.sin(t * 5 + n) * 4;
+    } else {
+      if (!p.go) { p.go = 1; p.vx = (p.x - W / 2) * .04 + rnd(-1.5, 1.5); p.vy = rnd(-2, 2); p.vz = rnd(-2, 2); }
+      if (p.cr >= 0) {                                // crystal lattice
+        const c = crystals[p.cr], k = p.slot, sink = ease((t - 3.2) / 2.2), sp = 36 - sink * 6;
+        const dx = (k % 3 - 1) * sp, dy = (Math.floor(k / 3) % 3 - 1) * sp, dz = (Math.floor(k / 9) - .5) * sp;
+        const a = (t - 1.6) * 1.1 * (1 - sink), cs = Math.cos(a), sn = Math.sin(a);
+        const tx = c.cx + dx * cs - dz * sn, ty = c.cy + (H - 70 - c.cy) * sink + dy, tz = dx * sn + dz * cs;
+        const f = ease((t - 1.6) / 1.4); p.x += (tx - p.x) * .12 * (.3 + f); p.y += (ty - p.y) * .12 * (.3 + f); p.z += (tz - p.z) * .12 * (.3 + f);
+      } else {                                        // free, bouncing sphere
+        p.x += p.vx; p.y += p.vy; p.z += p.vz; p.vx *= .995; p.vy *= .995;
+        if (p.x < 30 || p.x > W - 30) p.vx *= -1; if (p.y < 40 || p.y > H - 60) p.vy *= -1; if (Math.abs(p.z) > 110) p.vz *= -1;
+        p.x = Math.max(30, Math.min(W - 30, p.x)); p.y = Math.max(40, Math.min(H - 60, p.y));
+        if (Math.hypot(p.vx, p.vy) < .4) { p.vx += rnd(-.3, .3); p.vy += rnd(-.3, .3); }
+      }
+    }
+  });
+}
+function draw(t) {
+  g2.clearRect(0, 0, W, H);
+  const lg = g2.createLinearGradient(0, 40, 0, H); lg.addColorStop(0, 'rgba(61,123,255,.10)'); lg.addColorStop(1, 'rgba(34,229,255,.22)');
+  g2.fillStyle = lg; g2.fillRect(10, 40, W - 20, H - 50);
+  g2.strokeStyle = '#22e5ff'; g2.lineWidth = 2; g2.strokeRect(10, 40, W - 20, H - 50);
+  if (t > 1.5 && t < 2.3) {                           // collision energy ring
+    const k = (t - 1.5) / .8; g2.strokeStyle = `rgba(255,154,46,${1 - k})`; g2.lineWidth = 6 * (1 - k) + 1;
+    g2.beginPath(); g2.arc(W / 2, H * .42, 20 + k * 150, 0, 7); g2.stroke();
+    g2.fillStyle = `rgba(255,255,255,${.35 * (1 - k)})`; g2.fillRect(10, 40, W - 20, H - 50);
+  }
+  const f = 420, list = parts.map(p => { const s = f / (f + p.z); return { p, s, X: W / 2 + (p.x - W / 2) * s, Y: H / 2 + (p.y - H / 2) * s }; }).sort((a, b) => b.p.z - a.p.z);
+  list.forEach(({ p, s, X, Y }) => {
+    const r = p.r * s, col = p.i.cat ? '34,229,255' : '255,154,46';
+    const gr = g2.createRadialGradient(X - r * .35, Y - r * .35, r * .1, X, Y, r);
+    gr.addColorStop(0, '#fff'); gr.addColorStop(.25, `rgb(${col})`); gr.addColorStop(1, `rgba(${col},.35)`);
+    g2.shadowColor = `rgb(${col})`; g2.shadowBlur = p.cr >= 0 && t > 3 ? 16 : 8;
+    g2.fillStyle = gr; g2.beginPath(); g2.arc(X, Y, r, 0, 7); g2.fill(); g2.shadowBlur = 0;
+    g2.fillStyle = '#001'; g2.font = `700 ${Math.max(9, r * .62)}px Segoe UI,sans-serif`; g2.textAlign = 'center'; g2.textBaseline = 'middle';
+    g2.fillText(ion(p.i), X, Y);
+  });
+  crystals.forEach((c, k) => { if (t > 5.2) { g2.fillStyle = '#ff9a2e'; g2.font = '700 14px Segoe UI'; g2.textAlign = 'center'; g2.fillText(S().pptL + ' ' + fm(k ? res.P2.c : res.P1.c, k ? res.P2.a : res.P1.a) + '(s)', c.cx, H - 18); } });
+  g2.fillStyle = '#a9b8d8'; g2.font = '13px Segoe UI'; g2.textAlign = 'left';
+  g2.fillText(parts.length ? '' : S().choose, 24, 70);
+}
+function loop(now) {
+  if (!document.getElementById('lab').classList.contains('on')) { running = false; return; }
+  const t = (now - t0) / 1000; step(t); draw(t); requestAnimationFrame(loop);
+}
+
+window.chemLang = () => { render(); if (res) showText(res); };
+window.chemShow = t => { document.querySelectorAll('#chem section').forEach(s => s.classList.toggle('on', s.id === t)); if (t === 'lab') sizeCv(); };
+render();
+})();
+</script>
+<script>
+
+(function () {   // cosmic background: twinkling stars, drifting dust, soft neon nebulae (30 fps, paused when hidden)
+  const cv = document.getElementById('cosmos'), g = cv.getContext('2d'), still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W, H, stars, dust, neb;
+  function init() {
+    const dpr = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    stars = Array.from({ length: Math.round(W * H / 5500) }, () => ({ x: Math.random() * W, y: Math.random() * H, z: Math.random(), p: Math.random() * 6.28, s: .6 + Math.random() }));
+    dust = Array.from({ length: 45 }, () => ({ x: Math.random() * W, y: Math.random() * H, vx: (Math.random() - .5) * .15, vy: -.05 - Math.random() * .12, r: 1 + Math.random() * 2.5 }));
+    neb = document.createElement('canvas'); neb.width = Math.ceil(W / 2); neb.height = Math.ceil(H / 2);
+    const n = neb.getContext('2d'), M = Math.max(neb.width, neb.height);
+    [[.2, .25, .55, '61,123,255'], [.82, .7, .6, '170,90,255'], [.55, .08, .4, '34,229,255'], [.25, .9, .4, '255,150,40']].forEach(([x, y, r, c]) => {
+      const gr = n.createRadialGradient(x * neb.width, y * neb.height, 0, x * neb.width, y * neb.height, r * M);
+      gr.addColorStop(0, `rgba(${c},.20)`); gr.addColorStop(1, `rgba(${c},0)`); n.fillStyle = gr; n.fillRect(0, 0, neb.width, neb.height);
+    });
+  }
+  function frame(t) {
+    g.fillStyle = '#02030a'; g.fillRect(0, 0, W, H);
+    g.drawImage(neb, -40 + Math.sin(t / 20000) * 30, -30 + Math.cos(t / 26000) * 20, W + 80, H + 60);
+    stars.forEach(s => {
+      const x = (s.x + t * .004 * (.2 + s.z)) % W, a = (.55 + .45 * Math.sin(t / 700 * s.s + s.p)) * (.3 + .7 * s.z), r = .6 + s.z * 1.3;
+      g.fillStyle = `rgba(255,255,255,${a})`; g.fillRect(x, s.y, r, r);
+    });
+    g.fillStyle = 'rgba(150,225,255,.10)';
+    dust.forEach(d => { d.x += d.vx; d.y += d.vy; if (d.y < -5) d.y = H + 5; if (d.x < -5) d.x = W + 5; if (d.x > W + 5) d.x = -5; g.beginPath(); g.arc(d.x, d.y, d.r, 0, 7); g.fill(); });
+  }
+  let last = 0, raf = 0;
+  function loop(t) { raf = requestAnimationFrame(loop); if (t - last < 33) return; last = t; frame(t); }
+  const run = () => { if (!still && !raf) raf = requestAnimationFrame(loop); };
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { cancelAnimationFrame(raf); raf = 0; } else run(); });
+  init(); frame(0); run();
+  addEventListener('resize', () => { init(); frame(0); });
+})();
+
+
+(function () {   // top-level tabs: 3D table + 4 chemistry tabs
+  const nav = document.getElementById('nav');
+  const setNavH = () => document.documentElement.style.setProperty('--navh', nav.offsetHeight + 'px');
+  function showTab(t) {
+    document.body.dataset.tab = t;
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+    chemShow(t === 'table' ? '' : t);
+    setNavH();
+    if (t === 'table') { controls.handleResize(); dirty = true; }
+  }
+  document.getElementById('tabs').addEventListener('click', e => { const t = e.target.dataset.t; if (t) showTab(t); });
+  new ResizeObserver(setNavH).observe(nav); setNavH();
+})();
+
+</script>
+</body>
+</html>
